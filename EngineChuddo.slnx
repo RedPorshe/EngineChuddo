@@ -3,8 +3,8 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="ChudEngine/ChudEngine.vcxproj" Id="9aaceb48-b009-4b80-8829-c189320b23c3" />
-  <Project Path="ShaderCompilerTool/ShaderCompilerTool.vcxproj" Id="8eddfade-e5af-4f6c-b03b-a475480c6c5e">
-    <BuildDependency Project="ChudEngine/ChudEngine.vcxproj" />
-  </Project>  
+  <Project Path="ChudEngine/ChudEngine.vcxproj" Id="9aaceb48-b009-4b80-8829-c189320b23c3">
+    <BuildDependency Project="ShaderCompilerTool/ShaderCompilerTool.vcxproj" />
+  </Project>
+  <Project Path="ShaderCompilerTool/ShaderCompilerTool.vcxproj" Id="8eddfade-e5af-4f6c-b03b-a475480c6c5e" />  
 </Solution>

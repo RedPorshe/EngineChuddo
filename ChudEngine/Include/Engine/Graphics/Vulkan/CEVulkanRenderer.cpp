@@ -35,6 +35,36 @@ namespace CE
 
 		}
 
+
+	void CEVulkanRenderer::ReloadShaders ()
+		{
+		if (!Initialized || !Pipeline) return;
+
+		CE_CORE_DEBUG ( "Reloading shaders..." );
+
+		// Ждем завершения всех операций
+		vkDeviceWaitIdle ( Context->GetDevice () );
+
+		// Сохраняем текущие матрицы
+		auto viewMatrix = ViewMatrix;
+		auto projMatrix = ProjectionMatrix;
+
+		// Пересоздаем пайплайн с новыми шейдерами
+		Pipeline->Shutdown ();
+		if (!Pipeline->Initialize ( Swapchain->GetRenderPass () ))
+			{
+			CE_CORE_ERROR ( "Failed to recreate pipeline after shader reload!" );
+			// В случае ошибки можно попробовать восстановить старые шейдеры...
+			}
+		else
+			{
+				// Восстанавливаем матрицы
+			Pipeline->SetViewMatrix ( viewMatrix );
+			Pipeline->SetProjectionMatrix ( projMatrix );
+			CE_CORE_DEBUG ( "Shaders reloaded successfully" );
+			}
+		}
+
 	void CEVulkanRenderer::SetCameraViewMatrix ( const Math::Matrix4 & viewMatrix )
 		{
 		ViewMatrix = viewMatrix;

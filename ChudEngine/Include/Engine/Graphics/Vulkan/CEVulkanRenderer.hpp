@@ -34,7 +34,7 @@ namespace CE
             const Math::Vector3 & GetCameraPosition () const { return CameraPosition; }
 
             void SetCurrentApplication ( CEApplication * app ) { CurrentApplication = app; }
-
+            void ReloadShaders ();
             bool Initialize ( CEWindow * window ) override;
             void Shutdown () override;
             void RenderFrame () override;

@@ -115,7 +115,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\Include;E:\Libs\glfw-3.4.bin.WIN64\include;E:\Projects\EngineChuddo\ChudEngine\Include\Runtime;E:\Projects\EngineChuddo\ChudEngine\Include\App;E:\Projects\EngineChuddo\ChudEngine\Include\Engine;E:\Projects\EngineChuddo\ChudEngine\Include\Framework;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\Include;E:\Libs\glfw-3.4.bin.WIN64\include;E:\Projects\EngineChuddo\ChudEngine\Include\Runtime;E:\Projects\EngineChuddo\ChudEngine\Include\App;E:\Projects\EngineChuddo\ChudEngine\Include\Engine;E:\Projects\EngineChuddo\ChudEngine\Include\Framework;E:\Projects\EngineChuddo\ShaderCompilerTool;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -142,6 +142,7 @@ if exist "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" (
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\Include;E:\Libs\glfw-3.4.bin.WIN64\include;E:\Projects\EngineChuddo\ChudEngine\Include\Runtime;E:\Projects\EngineChuddo\ChudEngine\Include\App;E:\Projects\EngineChuddo\ChudEngine\Include\Engine;E:\Projects\EngineChuddo\ChudEngine\Include\Framework;E:\Projects\EngineChuddo\ShaderCompilerTool;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -194,6 +195,7 @@ if exist "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" (
     <ClInclude Include="Include\Runtime\Core\Containers\CEArray.hpp" />
     <ClInclude Include="Include\Runtime\Core\CoreTypes.hpp" />
     <ClInclude Include="Include\Runtime\Platform\Window\CEWindow.hpp" />
+    <ClInclude Include="..\ShaderCompilerTool\ShaderCompiler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Include\App\ChudEngineApp.cpp" />
@@ -224,6 +226,7 @@ if exist "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" (
     <ClCompile Include="Include\Runtime\Core\CEObject\Components\CESceneComponent.cpp" />
     <ClCompile Include="Include\Runtime\Core\CEObject\Components\CETransformComponent.cpp" />
     <ClCompile Include="Include\Runtime\Platform\Window\CWWindow.cpp" />
+    <ClCompile Include="..\ShaderCompilerTool\ShaderCompiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Shaders\Vulkan\corrected_triangle.frag" />

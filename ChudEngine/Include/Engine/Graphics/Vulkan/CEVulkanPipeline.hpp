@@ -8,6 +8,7 @@
 #include "Math/Matrix.hpp"
 #include <array>
 #include <memory>
+#include <string>
 
 namespace CE
     {
@@ -47,6 +48,16 @@ namespace CE
             uint32_t GetMaxObjects () const { return MAX_OBJECTS; }
             VkDeviceSize GetDynamicAlignment () const { return m_DynamicAlignment; }
 
+            // Новые методы для управления шейдерами
+            bool SetVertexShader ( const std::string & shaderPath );
+            bool SetFragmentShader ( const std::string & shaderPath );
+            bool CompileShaders ();
+            bool ReloadShaders ();
+
+            // Геттеры для отладки
+            const std::string & GetVertexShaderPath () const { return m_VertexShaderPath; }
+            const std::string & GetFragmentShaderPath () const { return m_FragmentShaderPath; }
+
         private:
             bool CreateGraphicsPipeline ( VkRenderPass renderPass );
             bool CreateUniformBuffers ();
@@ -54,7 +65,14 @@ namespace CE
             bool CreateDescriptorPool ();
             bool CreateDescriptorSets ();
             VkShaderModule CreateShaderModule ( const std::vector<uint32_t> & code );
+            void DestroyShaderModules ();
 
+            // Методы работы с шейдерами
+            std::vector<uint32_t> LoadShader ( const std::string & filename );
+            std::vector<uint32_t> CompileAndLoadShader ( const std::string & sourcePath );
+            bool CompileShaderFile ( const std::string & sourcePath, const std::string & outputPath );
+
+            // Устаревшие методы - сохраняем для совместимости
             std::vector<uint32_t> CompileVertexShader ();
             std::vector<uint32_t> CompileFragmentShader ();
 
@@ -81,6 +99,16 @@ namespace CE
 
             Math::Matrix4 m_ViewMatrix;
             Math::Matrix4 m_ProjectionMatrix;
+
+            // Пути к шейдерам
+            std::string m_VertexShaderPath;
+            std::string m_FragmentShaderPath;
+            std::vector<uint32_t> m_VertexShaderCode;
+            std::vector<uint32_t> m_FragmentShaderCode;
+
+            // Шейдерные модули (для cleanup)
+            VkShaderModule m_VertexShaderModule = VK_NULL_HANDLE;
+            VkShaderModule m_FragmentShaderModule = VK_NULL_HANDLE;
 
             struct Vertex
                 {
