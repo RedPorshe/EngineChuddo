@@ -1,234 +1,93 @@
-﻿﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Исходные файлы">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Файлы заголовков">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Файлы ресурсов">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
+    <ClCompile Include="Include\App\ChudEngineApp.cpp" />
+    <ClCompile Include="Include\App\main.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanBuffer.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanCommandBuffer.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanContext.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanPipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanRenderer.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanSwapchain.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanSync.cpp" />
+    <ClCompile Include="Include\Framework\Math\MathUtils.cpp" />
+    <ClCompile Include="Include\Framework\Math\Matrix.cpp" />
+    <ClCompile Include="Include\Framework\Math\Quaternion.cpp" />
+    <ClCompile Include="Include\Framework\Math\Vector.cpp" />
+    <ClCompile Include="Include\Framework\Utils\FileSystem.cpp" />
+    <ClCompile Include="Include\Framework\Utils\Logger.cpp" />
+    <ClCompile Include="Include\Framework\Utils\UUID.cpp" />
+    <ClCompile Include="Include\Runtime\Core\Application\CEApplication.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\CEActor.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\CEEventSystem.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\CEObject.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\CETickManager.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\CEWorld.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CEActorComponent.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CEComponent.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CEMeshComponent.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CESceneComponent.cpp" />
+    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CETransformComponent.cpp" />
+    <ClCompile Include="Include\Runtime\Platform\Window\CWWindow.cpp" />
+    <ClCompile Include="..\ShaderCompilerTool\ShaderCompiler.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanPipelineManager.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\PipeLines\CEStaticMeshPipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\PipeLines\CESkeletalMeshPipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\PipeLines\CELightPipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\PipeLines\CEPostProcessPipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanBasePipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\CEWorldRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Include\MatrixDebugUtils.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Platform\Window\CEWindow.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\Containers\CEArray.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CoreTypes.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\CEWorld.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\CEActor.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\CEClass.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\CEDelegate.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\CEEvent.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\CEEvents.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\CEEventSystem.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\CEObject.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\CETickManager.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CEActorComponent.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CEComponent.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CEMeshComponent.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CESceneComponent.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CETransformComponent.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Runtime\Core\Application\CEApplication.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Framework\Utils\FileSystem.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Framework\Utils\Logger.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Framework\Utils\StringUtils.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Framework\Utils\UUID.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Framework\Math\MathUtils.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Framework\Math\Matrix.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Framework\Math\Quaternion.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Framework\Math\Vector.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Framework\Core\Logger.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Engine\Graphics\CERenderer.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanBuffer.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanCommandBuffer.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanContext.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanPipeline.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanRenderer.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanSwapchain.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanSync.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\App\ChudEngineApp.hpp">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ShaderCompilerTool\ShaderCompiler.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
+    <ClInclude Include="Include\App\ChudEngineApp.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\CERenderer.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanBuffer.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanCommandBuffer.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanContext.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanRenderer.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanSwapchain.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanSync.hpp" />
+    <ClInclude Include="Include\Framework\Core\Logger.h" />
+    <ClInclude Include="Include\Framework\Math\MathUtils.hpp" />
+    <ClInclude Include="Include\Framework\Math\Matrix.hpp" />
+    <ClInclude Include="Include\Framework\Math\Quaternion.hpp" />
+    <ClInclude Include="Include\Framework\Math\Vector.hpp" />
+    <ClInclude Include="Include\Framework\Utils\FileSystem.hpp" />
+    <ClInclude Include="Include\Framework\Utils\Logger.hpp" />
+    <ClInclude Include="Include\Framework\Utils\StringUtils.hpp" />
+    <ClInclude Include="Include\Framework\Utils\UUID.hpp" />
+    <ClInclude Include="Include\MatrixDebugUtils.hpp" />
+    <ClInclude Include="Include\Runtime\Core\Application\CEApplication.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\CEActor.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\CEClass.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\CEDelegate.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\CEEvent.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\CEEvents.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\CEEventSystem.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\CEObject.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\CETickManager.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\CEWorld.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CEActorComponent.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CEComponent.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CEMeshComponent.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CESceneComponent.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CEObject\Components\CETransformComponent.hpp" />
+    <ClInclude Include="Include\Runtime\Core\Containers\CEArray.hpp" />
+    <ClInclude Include="Include\Runtime\Core\CoreTypes.hpp" />
+    <ClInclude Include="Include\Runtime\Platform\Window\CEWindow.hpp" />
+    <ClInclude Include="..\ShaderCompilerTool\ShaderCompiler.h" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanBasePipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\PipeLines\CEStaticMeshPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\PipeLines\CESkeletalMeshPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\PipeLines\CELightPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\PipeLines\CEPostProcessPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanPipelineManager.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\CEWorldRenderer.hpp" />
+    <ClInclude Include="Include\Framework\Math\MathFunctions.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Include\Runtime\Platform\Window\CWWindow.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\CEActor.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\CEEventSystem.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\CEObject.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\CETickManager.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\CEWorld.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CEActorComponent.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CEComponent.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CEMeshComponent.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CESceneComponent.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\CEObject\Components\CETransformComponent.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Runtime\Core\Application\CEApplication.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Framework\Utils\FileSystem.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Framework\Utils\Logger.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Framework\Utils\UUID.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Framework\Math\MathUtils.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Framework\Math\Matrix.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Framework\Math\Quaternion.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Framework\Math\Vector.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanBuffer.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanCommandBuffer.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanContext.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanPipeline.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanRenderer.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanSwapchain.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanSync.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\App\ChudEngineApp.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="Include\App\main.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>  
-    <ClCompile Include="..\ShaderCompilerTool\ShaderCompiler.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Shaders\Vulkan\corrected_triangle.frag" />
-    <None Include="Resources\Shaders\Vulkan\corrected_triangle.vert" />
-    <None Include="Resources\Shaders\Vulkan\Simple.frag" />
-    <None Include="Resources\Shaders\Vulkan\simple.frag.spv" />
-    <None Include="Resources\Shaders\Vulkan\Simple.vert" />
-    <None Include="Resources\Shaders\Vulkan\simple.vert.spv" />
-    <None Include="Resources\Shaders\Vulkan\triangle.frag" />
-    <None Include="Resources\Shaders\Vulkan\triangle.frag.spv" />
     <None Include="Resources\Shaders\Vulkan\triangle.vert" />
-    <None Include="Resources\Shaders\Vulkan\triangle.vert.spv" />
+    <None Include="Resources\Shaders\Vulkan\triangle.frag" />
   </ItemGroup>
 </Project>

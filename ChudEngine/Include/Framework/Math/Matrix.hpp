@@ -5,7 +5,7 @@
 
 namespace CE::Math
     {
-    class Quaternion;
+    class Quaternion; // Forward declaration
 
     class Matrix4
         {
@@ -51,8 +51,6 @@ namespace CE::Math
             void Transpose ();
 
             float Determinant () const;
-
-            // ”браны дублирующиес€ объ€влени€ Inverted() и Invert()
 
             // Static factory methods
             static Matrix4 Identity ();

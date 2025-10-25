@@ -5,7 +5,6 @@
 
 namespace CE::Math
     {
-
     Quaternion::Quaternion () : x ( 0.0f ), y ( 0.0f ), z ( 0.0f ), w ( 1.0f ) { }
 
     Quaternion::Quaternion ( float x, float y, float z, float w )
@@ -24,7 +23,7 @@ namespace CE::Math
         }
 
     Quaternion::Quaternion ( const Vector3 & eulerAngles ) {
-        // Convert Euler angles (pitch, yaw, roll) to quaternion
+        // Убедитесь, что углы в радианах
         float halfPitch = eulerAngles.x * 0.5f;
         float halfYaw = eulerAngles.y * 0.5f;
         float halfRoll = eulerAngles.z * 0.5f;
@@ -36,9 +35,10 @@ namespace CE::Math
         float sinRoll = std::sin ( halfRoll );
         float cosRoll = std::cos ( halfRoll );
 
-        x = cosRoll * sinPitch * cosYaw + sinRoll * cosPitch * sinYaw;
-        y = cosRoll * cosPitch * sinYaw - sinRoll * sinPitch * cosYaw;
-        z = sinRoll * cosPitch * cosYaw - cosRoll * sinPitch * sinYaw;
+        // Правильная формула для порядка Yaw-Pitch-Roll
+        x = sinRoll * cosPitch * cosYaw - cosRoll * sinPitch * sinYaw;
+        y = cosRoll * sinPitch * cosYaw + sinRoll * cosPitch * sinYaw;
+        z = cosRoll * cosPitch * sinYaw - sinRoll * sinPitch * cosYaw;
         w = cosRoll * cosPitch * cosYaw + sinRoll * sinPitch * sinYaw;
         }
 

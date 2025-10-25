@@ -13,11 +13,20 @@ class ChudEngineApp : public CE::CEApplication
     private:
         void SetInitialized ( bool initialized ) { m_Initialized = initialized; }
         bool m_Initialized { false };
-        void CreateTestScene ();
         void InitializeMeshComponents ();
 
         CE::Math::Vector3 CameraPosition;
         CE::Math::Vector3 CameraTarget;
         float CameraFOV;
 
+        void CreateTestScene ();
+        void TestMatrixSystem ();
+        void TestCompositionOrder ();
+        void DetailedMatrixTest ();
+        void TestActorTransforms ();
+        void TestIdentityMultiplication ();
+        void TestTranslationMatrix ();
+        void CreateDebugTestScene ();
+        void TestSingleActorRendering ();
+        void CreateEmergencyTestScene ();
     };

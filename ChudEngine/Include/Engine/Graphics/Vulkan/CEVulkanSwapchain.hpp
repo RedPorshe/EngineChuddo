@@ -33,6 +33,10 @@ namespace CE
             VkResult AcquireNextImage ( VkSemaphore imageAvailableSemaphore );
             VkResult SubmitCommandBuffer ( VkCommandBuffer commandBuffer, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence );
 
+            bool CreateUIRenderPass ();
+           // VkRenderPass GetUIRenderPass () const { return UIRenderPass; }
+            VkRenderPass GetUIRenderPass () const { return RenderPass; }
+
         private:
             void CreateSwapchain ( CEWindow * window );
             void CreateImageViews ();
@@ -66,5 +70,6 @@ namespace CE
 
             // Current state
             uint32_t CurrentImageIndex = 0;
+            VkRenderPass UIRenderPass = VK_NULL_HANDLE; // Добавляем если нужно отдельный
         };
     }

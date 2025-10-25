@@ -77,4 +77,6 @@ namespace CE::Math
         return value;
         }
 
+  
+
     } // namespace ChudEngine::Math

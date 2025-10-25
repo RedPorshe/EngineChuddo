@@ -65,6 +65,9 @@ namespace CE
             uint64 Size () const { return ArraySize; }
             uint64 Capacity () const { return ArrayCapacity; }
 
+            size_t size () const { return static_cast< size_t >( ArraySize ); }
+            size_t capacity () const { return static_cast< size_t >( ArrayCapacity ); }
+            bool empty () const { return ArraySize == 0; }
            
             T * RawData () { return DataPtr; }
             const T * RawData () const { return DataPtr; }

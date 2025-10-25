@@ -5,7 +5,6 @@
 
 namespace CE::Math
     {
-
     Matrix4::Matrix4 () : elements { 0 } { }
 
     Matrix4::Matrix4 ( float diagonal ) : elements { 0 } {
@@ -37,13 +36,14 @@ namespace CE::Math
 
     Matrix4 Matrix4::operator*( const Matrix4 & other ) const {
         Matrix4 result;
-        for (size_t col = 0; col < 4; ++col)
+        for (int row = 0; row < 4; ++row)
             {
-            for (size_t row = 0; row < 4; ++row)
+            for (int col = 0; col < 4; ++col)
                 {
                 float sum = 0.0f;
-                for (size_t k = 0; k < 4; ++k)
+                for (int k = 0; k < 4; ++k)
                     {
+// this[row][k] * other[k][col]
                     sum += At ( row, k ) * other.At ( k, col );
                     }
                 result.At ( row, col ) = sum;
@@ -62,6 +62,7 @@ namespace CE::Math
         }
 
     Vector4 Matrix4::operator*( const Vector4 & vector ) const {
+       // ПРАВИЛЬНАЯ индексация для column-major матриц
         return Vector4 (
             elements[ 0 ] * vector.x + elements[ 4 ] * vector.y + elements[ 8 ] * vector.z + elements[ 12 ] * vector.w,
             elements[ 1 ] * vector.x + elements[ 5 ] * vector.y + elements[ 9 ] * vector.z + elements[ 13 ] * vector.w,
@@ -203,6 +204,35 @@ namespace CE::Math
         return result;
         }
 
+    Matrix4 Matrix4::Rotation ( const Vector3 & axis, float angle ) {
+        // Create rotation matrix from axis and angle
+        Vector3 normalizedAxis = axis.Normalized ();
+        float cosA = std::cos ( angle );
+        float sinA = std::sin ( angle );
+        float oneMinusCosA = 1.0f - cosA;
+
+        float x = normalizedAxis.x;
+        float y = normalizedAxis.y;
+        float z = normalizedAxis.z;
+
+        Matrix4 result;
+        result.elements[ 0 ] = cosA + x * x * oneMinusCosA;
+        result.elements[ 1 ] = y * x * oneMinusCosA + z * sinA;
+        result.elements[ 2 ] = z * x * oneMinusCosA - y * sinA;
+
+        result.elements[ 4 ] = x * y * oneMinusCosA - z * sinA;
+        result.elements[ 5 ] = cosA + y * y * oneMinusCosA;
+        result.elements[ 6 ] = z * y * oneMinusCosA + x * sinA;
+
+        result.elements[ 8 ] = x * z * oneMinusCosA + y * sinA;
+        result.elements[ 9 ] = y * z * oneMinusCosA - x * sinA;
+        result.elements[ 10 ] = cosA + z * z * oneMinusCosA;
+
+        result.elements[ 15 ] = 1.0f;
+
+        return result;
+        }
+
     Matrix4 Matrix4::Scale ( const Vector3 & scale ) {
         Matrix4 result ( 1.0f );
         result.elements[ 0 ] = scale.x;
@@ -267,7 +297,6 @@ namespace CE::Math
         return result;
         }
 
-
     Matrix4 Matrix4::Rotate ( const Quaternion & rotation ) {
         return rotation.ToMatrix ();
         }
@@ -282,7 +311,6 @@ namespace CE::Math
         *this = Identity ();
         return true;
         }
-
 
         // Static constants
     const Matrix4 Matrix4::Zero = Matrix4 ( 0.0f );

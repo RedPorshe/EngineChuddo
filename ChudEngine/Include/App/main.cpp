@@ -10,7 +10,7 @@ int main ()
 	CE::Logger::Init ( "ChudLog.log", true );
 
 #ifdef _DEBUG
-	CE::Logger::SetLogLevel ( CE::LogLevel::Debug );
+	CE::Logger::SetLogLevel ( CE::LogLevel::Trace );
 #else
 	CE::Logger::SetLogLevel ( CE::LogLevel::Info );
 #endif // _DEBUG

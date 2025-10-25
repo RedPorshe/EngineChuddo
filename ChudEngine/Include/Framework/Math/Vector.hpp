@@ -3,13 +3,13 @@
 #include <cmath>
 #include <limits>
 #include <algorithm>
-#include <array> // Добавлено
+#include <array>
 
 namespace CE::Math
     {
-
-// Forward declarations
-    
+        // Forward declarations
+    class Quaternion;
+    class Matrix4;
 
     class Vector2
         {
@@ -138,8 +138,6 @@ namespace CE::Math
             static const Vector3 UnitY;
             static const Vector3 UnitZ;
         };
-
-    class Matrix4;
 
     class Vector4
         {

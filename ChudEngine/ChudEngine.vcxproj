@@ -125,10 +125,17 @@
     </Link>
     <PostBuildEvent>
       <Command>echo Compiling shaders...
+echo ProjectDir: $(ProjectDir)
+echo TargetDir: $(TargetDir)
+echo SolutionDir: $(SolutionDir)
+
 if exist "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" (
+    echo ShaderCompilerTool found, running...
     "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" "$(ProjectDir)Resources\Shaders" "$(TargetDir)Resources\Shaders"
+    echo Shader compilation finished
 ) else (
-    echo Warning: ShaderCompilerTool not found
+    echo ERROR: ShaderCompilerTool not found at "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe"
+    dir "$(SolutionDir)bin\$(Configuration)\" *.exe
 )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -150,24 +157,39 @@ if exist "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" (
     </Link>
     <PostBuildEvent>
       <Command>echo Compiling shaders...
+echo ProjectDir: $(ProjectDir)
+echo TargetDir: $(TargetDir)
+echo SolutionDir: $(SolutionDir)
+
 if exist "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" (
+    echo ShaderCompilerTool found, running...
     "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" "$(ProjectDir)Resources\Shaders" "$(TargetDir)Resources\Shaders"
+    echo Shader compilation finished
 ) else (
-    echo Warning: ShaderCompilerTool not found
+    echo ERROR: ShaderCompilerTool not found at "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe"
+    dir "$(SolutionDir)bin\$(Configuration)\" *.exe
 )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Include\App\ChudEngineApp.hpp" />
     <ClInclude Include="Include\Engine\Graphics\CERenderer.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\CEWorldRenderer.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanBuffer.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanCommandBuffer.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanContext.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanPipelineManager.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanRenderer.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanSwapchain.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanSync.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\PipeLines\CELightPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\PipeLines\CEPostProcessPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\PipeLines\CESkeletalMeshPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\PipeLines\CEStaticMeshPipeline.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanBasePipeline.hpp" />
     <ClInclude Include="Include\Framework\Core\Logger.h" />
+    <ClInclude Include="Include\Framework\Math\MathFunctions.hpp" />
     <ClInclude Include="Include\Framework\Math\MathUtils.hpp" />
     <ClInclude Include="Include\Framework\Math\Matrix.hpp" />
     <ClInclude Include="Include\Framework\Math\Quaternion.hpp" />
@@ -200,13 +222,20 @@ if exist "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" (
   <ItemGroup>
     <ClCompile Include="Include\App\ChudEngineApp.cpp" />
     <ClCompile Include="Include\App\main.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\CEWorldRenderer.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanBasePipeline.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanBuffer.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanCommandBuffer.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanContext.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanPipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanPipelineManager.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanRenderer.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanSwapchain.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanSync.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\PipeLines\CELightPipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\PipeLines\CEPostProcessPipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\PipeLines\CESkeletalMeshPipeline.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\PipeLines\CEStaticMeshPipeline.cpp" />
     <ClCompile Include="Include\Framework\Math\MathUtils.cpp" />
     <ClCompile Include="Include\Framework\Math\Matrix.cpp" />
     <ClCompile Include="Include\Framework\Math\Quaternion.cpp" />
@@ -229,16 +258,8 @@ if exist "$(SolutionDir)bin\$(Configuration)\ShaderCompilerTool.exe" (
     <ClCompile Include="..\ShaderCompilerTool\ShaderCompiler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Shaders\Vulkan\corrected_triangle.frag" />
-    <None Include="Resources\Shaders\Vulkan\corrected_triangle.vert" />
-    <None Include="Resources\Shaders\Vulkan\Simple.frag" />
-    <None Include="Resources\Shaders\Vulkan\simple.frag.spv" />
-    <None Include="Resources\Shaders\Vulkan\Simple.vert" />
-    <None Include="Resources\Shaders\Vulkan\simple.vert.spv" />
     <None Include="Resources\Shaders\Vulkan\triangle.frag" />
-    <None Include="Resources\Shaders\Vulkan\triangle.frag.spv" />
     <None Include="Resources\Shaders\Vulkan\triangle.vert" />
-    <None Include="Resources\Shaders\Vulkan\triangle.vert.spv" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

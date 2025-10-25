@@ -13,7 +13,13 @@ namespace CE
             auto * transform = GetOwner ()->GetTransform ();
             if (transform)
                 {
-                return transform->GetWorldTransform ();
+                Math::Matrix4 worldTransform = transform->GetWorldTransform ();
+                CE_DEBUG ( "Mesh '{}' world transform: position=({}, {}, {})",
+                           GetName (),
+                           transform->GetPosition ().x,
+                           transform->GetPosition ().y,
+                           transform->GetPosition ().z );
+                return worldTransform;
                 }
             }
         return Math::Matrix4::Identity ();
@@ -32,6 +38,34 @@ namespace CE
 
         CE_DEBUG ( "CEMeshComponent '{}' created with {} vertices", GetName (), m_Vertices.size () );
         }
+
+    bool CEMeshComponent::EnsureBuffersCreated ( CEVulkanRenderer * renderer )
+        {
+        if (!renderer) return false;
+
+        // Создаем vertex buffer если нужно
+        if (!m_VertexBuffer || !m_VertexBuffer->IsValid ())
+            {
+            if (!CreateVertexBuffer ( renderer ))
+                {
+                CE_ERROR ( "Failed to create vertex buffer for mesh '{}'", GetName () );
+                return false;
+                }
+            }
+
+            // Создаем index buffer если есть индексы
+        if (HasIndices () && ( !m_IndexBuffer || !m_IndexBuffer->IsValid () ))
+            {
+            if (!CreateIndexBuffer ( renderer ))
+                {
+                CE_ERROR ( "Failed to create index buffer for mesh '{}'", GetName () );
+                // Продолжаем без индексного буфера
+                }
+            }
+
+        return IsValid ();
+        }
+   
 
     CEMeshComponent::~CEMeshComponent ()
         {
@@ -62,6 +96,23 @@ namespace CE
         {
         if (!renderer || m_Vertices.empty ())
             {
+            return false;
+            }
+
+        CE_DEBUG ( "=== CEMeshComponent::CreateVertexBuffer ===" );
+        CE_DEBUG ( "  Component: {}", GetName () );
+        CE_DEBUG ( "  Vertex count: {}", m_Vertices.size () );
+        CE_DEBUG ( "  Renderer valid: {}", ( bool ) renderer );
+
+        if (m_Vertices.empty ())
+            {
+            CE_ERROR ( "  No vertices to create buffer!" );
+            return false;
+            }
+
+        if (!renderer)
+            {
+            CE_ERROR ( "  Renderer is null!" );
             return false;
             }
 
@@ -160,6 +211,7 @@ namespace CE
         VkBuffer vertexBuffers [] = { m_VertexBuffer->GetBuffer () };
         VkDeviceSize offsets [] = { 0 };
         vkCmdBindVertexBuffers ( commandBuffer, 0, 1, vertexBuffers, offsets );
+        CE_INFO ( "BindVertexBuffer ( VkCommandBuffer commandBuffer ) complited" );
         }
 
     void CEMeshComponent::BindIndexBuffer ( VkCommandBuffer commandBuffer )
@@ -168,25 +220,37 @@ namespace CE
             return;
 
         vkCmdBindIndexBuffer ( commandBuffer, m_IndexBuffer->GetBuffer (), 0, VK_INDEX_TYPE_UINT32 );
+        CE_INFO ( "BindIndexBuffer ( VkCommandBuffer commandBuffer ) complited" );
         }
 
     void CEMeshComponent::Render ( VkCommandBuffer commandBuffer )
         {
-        if (!m_VertexBuffer || !m_VertexBuffer->IsValid ())
+        if (!EnsureBuffersCreated ( m_Renderer ))
+            {
+            CE_ERROR ( "Failed to ensure buffers for mesh component '{}'", GetName () );
             return;
+            }
 
+        if (!m_VertexBuffer || !m_VertexBuffer->IsValid ())
+            {
+            CE_ERROR ( "Vertex buffer not valid for mesh component '{}'", GetName () );
+            return;
+            }
+
+            // Биндим vertex buffer
         BindVertexBuffer ( commandBuffer );
-
+        CE_INFO ( "Vertex buffer binded" );
+        // Рендерим с индексами или без
         if (HasIndices () && m_IndexBuffer && m_IndexBuffer->IsValid ())
             {
             BindIndexBuffer ( commandBuffer );
             vkCmdDrawIndexed ( commandBuffer, static_cast< uint32_t >( m_Indices.size () ), 1, 0, 0, 0 );
-            
+            CE_DEBUG ( "Rendered mesh '{}' with {} indices", GetName (), m_Indices.size () );
             }
         else
             {
             vkCmdDraw ( commandBuffer, static_cast< uint32_t >( m_Vertices.size () ), 1, 0, 0 );
-            
+            CE_DEBUG ( "Rendered mesh '{}' with {} vertices", GetName (), m_Vertices.size () );
             }
         }
     }

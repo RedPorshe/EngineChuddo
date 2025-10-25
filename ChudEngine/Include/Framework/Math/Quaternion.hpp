@@ -1,12 +1,11 @@
 #pragma once
 
 #include "Vector.hpp"
-// Убрано #include "Matrix.hpp" - будет forward declaration
 #include <cmath>
 
 namespace CE::Math
     {
-    class Matrix4; // Добавлено forward declaration
+    class Matrix4; // Forward declaration
 
     class Quaternion
         {
@@ -17,7 +16,7 @@ namespace CE::Math
             Quaternion ();
             Quaternion ( float x, float y, float z, float w );
             Quaternion ( const Vector3 & axis, float angle );
-            Quaternion ( const Vector3 & eulerAngles ); // Pitch, Yaw, Roll
+            explicit Quaternion ( const Vector3 & eulerAngles ); // Pitch, Yaw, Roll
 
             // Basic operations
             Quaternion operator+( const Quaternion & other ) const;
@@ -65,4 +64,4 @@ namespace CE::Math
             static const Quaternion IdentityQuaternion;
         };
 
-    } // namespace ChudEngine::Math
+    } // namespace CE::Math

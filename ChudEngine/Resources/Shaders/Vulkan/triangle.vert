@@ -5,13 +5,16 @@ layout(location = 1) in vec3 inColor;
 
 layout(location = 0) out vec3 fragColor;
 
-layout(binding = 0) uniform UniformBufferObject {
-    mat4 model;
-    mat4 view;
-    mat4 proj;
-} ubo;
+// PUSH CONSTANTS for matrices
+layout(push_constant) uniform MatrixPushConstants {
+    mat4 modelMatrix;
+    mat4 viewProjectionMatrix;
+} matrices;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+    // Apply transformations
+    mat4 mvp = matrices.viewProjectionMatrix * matrices.modelMatrix;
+    gl_Position = mvp * vec4(inPosition, 1.0);
+    
     fragColor = inColor;
 }
