@@ -417,12 +417,12 @@ namespace CE
         renderPassInfo.renderArea.offset = { 0, 0 };
         renderPassInfo.renderArea.extent = Swapchain->GetExtent ();
 
-        CEArray<VkClearValue> clearValues;
-        clearValues.Resize ( 1 );
-        clearValues[ 0 ].color = { {0.8f, 0.8f, 0.8f, 1.0f} };
+        VkClearValue clearValues[ 2 ];
+        clearValues[ 0 ].color = { {.20f, .20f, .2f, 1.0f} };
+        clearValues[ 1 ].depthStencil = { 1.0f, 0 };
 
-        renderPassInfo.clearValueCount = static_cast< uint32_t >( clearValues.Size () );
-        renderPassInfo.pClearValues = clearValues.RawData ();
+        renderPassInfo.clearValueCount = 2;
+        renderPassInfo.pClearValues = clearValues;
 
         vkCmdBeginRenderPass ( commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
