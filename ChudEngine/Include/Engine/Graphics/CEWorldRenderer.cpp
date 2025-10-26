@@ -102,19 +102,72 @@ namespace CE
 			return;
 			}
 
-			// Calculate model matrix
-		Math::Matrix4 modelMatrix = transform->GetWorldTransform ();
+	
 
-		// Get view/projection from renderer (you'll need to add these getters)
+   //   // Calculate matrices
+		Math::Matrix4 modelMatrix = transform->GetWorldTransform ();
 		Math::Matrix4 viewMatrix = m_Renderer->GetViewMatrix ();
 		Math::Matrix4 projectionMatrix = m_Renderer->GetProjectionMatrix ();
+
+		// Для column-major: ViewProjection = Projection * View
 		Math::Matrix4 viewProjectionMatrix = projectionMatrix * viewMatrix;
 
-		// Prepare push constants
+		// Prepare push constants - БЕЗ транспонирования!
 		MatrixPushConstants pushConstants {};
-		pushConstants.modelMatrix = modelMatrix;
-		pushConstants.viewProjectionMatrix = viewProjectionMatrix;
+		pushConstants.modelMatrix = modelMatrix; // column-major как есть
+		pushConstants.viewProjectionMatrix = viewProjectionMatrix; // column-major как есть
 
+		// Диагностика
+		CE_DEBUG ( "=== Matrix Debug (Column-Major) ===" );
+		CE_DEBUG ( "Push constants size: {} bytes", sizeof ( MatrixPushConstants ) );
+
+		
+		
+		if (transform)
+			{
+			CE_DEBUG ( "Raw Position: ({:.2f}, {:.2f}, {:.2f})",
+					   transform->GetPosition ().x,
+					   transform->GetPosition ().y,
+					   transform->GetPosition ().z );
+			}
+
+			// Выводим матрицы
+		modelMatrix.DebugPrint ( "Model Matrix" );
+		viewMatrix.DebugPrint ( "View Matrix" );
+		projectionMatrix.DebugPrint ( "Projection Matrix" );
+		viewProjectionMatrix.DebugPrint ( "ViewProjection Matrix" );
+
+		// Проверяем результат трансформации
+		Math::Vector4 testVertex ( 0, 0, 0, 1 ); // Тестовая вершина в локальных координатах
+		Math::Vector4 worldPos = modelMatrix * testVertex;
+		Math::Vector4 clipPos = viewProjectionMatrix * worldPos;
+
+		CE_DEBUG ( "Transform Test: Local(0,0,0) -> World({:.2f}, {:.2f}, {:.2f}) -> Clip({:.2f}, {:.2f}, {:.2f})",
+				   worldPos.x, worldPos.y, worldPos.z,
+				   clipPos.x, clipPos.y, clipPos.z );
+
+		CE_DEBUG ( "=== VERTEX CLIP SPACE ANALYSIS ===" );
+		auto vertices = meshComponent->GetVertices ();
+		for (size_t i = 0; i < vertices.size (); ++i)
+			{
+			Math::Vector4 localPos ( vertices[ i ].Position, 1.0f );
+			Math::Vector4 worldPos = modelMatrix * localPos;
+			Math::Vector4 clipPos = viewProjectionMatrix * worldPos;
+
+			CE_DEBUG ( "Vertex {}: Local({:.2f}, {:.2f}, {:.2f}) -> Clip({:.2f}, {:.2f}, {:.2f})",
+					   i,
+					   vertices[ i ].Position.x, vertices[ i ].Position.y, vertices[ i ].Position.z,
+					   clipPos.x, clipPos.y, clipPos.z );
+
+			  // Проверка видимости
+			bool visible = ( std::abs ( clipPos.x ) <= 1.0f && std::abs ( clipPos.y ) <= 1.0f &&
+							 clipPos.z >= -1.0f && clipPos.z <= 1.0f );
+			if (!visible)
+				{
+				CE_DEBUG ( "  Vertex {} is OUTSIDE clip space!", i );
+				}
+			}
+	
 		// PASS MATRICES TO SHADER via push constants
 		vkCmdPushConstants (
 			commandBuffer,
@@ -125,9 +178,10 @@ namespace CE
 			&pushConstants
 		);
 
+		CE_DEBUG ( "Push constants applied successfully" );
+
 		// Now render the mesh
 		meshComponent->Render ( commandBuffer );
-
 		}
 
 	bool CEWorldRenderer::EnsureMeshBuffersCreated ( CEMeshComponent * meshComponent )

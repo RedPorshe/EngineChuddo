@@ -17,18 +17,21 @@ namespace CE
                                                  const Math::Vector3 & target,
                                                  float fov )
         {
-            // Устанавливаем параметры камеры
-        CameraPosition = position;
-        CameraTarget = target;
-        CameraFOV = fov;
-
-        // Создаем матрицу вида (view matrix)
-        Math::Vector3 up = Math::Vector3::UnitY;
-        ViewMatrix = Math::Matrix4::LookAt ( position, target, up );
-
-        // Создаем матрицу проекции
         float aspectRatio = static_cast< float >( Window->GetWidth () ) / static_cast< float >( Window->GetHeight () );
-        ProjectionMatrix = Math::Matrix4::Perspective ( Math::ToRadians ( fov ), aspectRatio, 0.1f, 1000.0f );
+
+   // Используйте перспективную проекцию вместо ортографической
+        ProjectionMatrix = Math::Matrix4::Perspective (
+            Math::ToRadians ( 60.0f ),  // field of view
+            aspectRatio,            // aspect ratio  
+            0.1f,                   // near plane
+            100.0f                  // far plane
+        );
+
+        ViewMatrix = Math::Matrix4::LookAt (
+            Math::Vector3 ( 0.0f, 0.0f, 1.0f ),
+            Math::Vector3 ( 0.0f, 0.0f, 0.0f ),
+            Math::Vector3 ( 0.0f, 1.0f, 0.0f )
+        );
         }
 
     void CEVulkanRenderer::ReloadShaders ()
@@ -219,7 +222,12 @@ namespace CE
             return;
             }
 
+         // Диагностика матриц (можно убрать после отладки)
         static int frameCount = 0;
+        if (frameCount % 60 == 0) // Каждые 60 кадров
+            {
+            DebugPrintMatrices ();
+            }
         frameCount++;
 
         try

@@ -429,18 +429,23 @@ namespace CE
 
 	bool CEVulkanBasePipeline::CreatePipelineLayout ()
 		{
-			// Define push constant range for transformation matrices
+			// Проверка размера структуры
+		CE_CORE_DEBUG ( "=== Push Constants Size Check ===" );
+		CE_CORE_DEBUG ( "sizeof(Math::Matrix4): {} bytes", sizeof ( Math::Matrix4 ) );
+		CE_CORE_DEBUG ( "sizeof(MatrixPushConstants): {} bytes", sizeof ( MatrixPushConstants ) );
+		CE_CORE_DEBUG ( "Expected: 128 bytes for 2 matrices" );
+
 		VkPushConstantRange pushConstantRange {};
 		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		pushConstantRange.offset = 0;
-		pushConstantRange.size = sizeof ( MatrixPushConstants ); // 128 bytes for 2 matrices
+		pushConstantRange.size = sizeof ( MatrixPushConstants ); // Должно быть 128
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo {};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = 1;
 		pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-		pipelineLayoutInfo.pushConstantRangeCount = 1;  // ADD THIS
-		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;  // ADD THIS
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
 		if (vkCreatePipelineLayout ( m_Context->GetDevice (), &pipelineLayoutInfo, nullptr, &PipelineLayout ) != VK_SUCCESS)
 			{
@@ -448,6 +453,7 @@ namespace CE
 			return false;
 			}
 
+		CE_CORE_DEBUG ( "Pipeline layout created with push constant size: {} bytes", sizeof ( MatrixPushConstants ) );
 		return true;
 		}
 

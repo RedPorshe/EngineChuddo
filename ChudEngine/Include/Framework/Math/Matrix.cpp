@@ -1,7 +1,9 @@
 #include "Math/Matrix.hpp"
 #include "Math/Quaternion.hpp"
+#include "Utils/Logger.hpp"
 #include <cmath>
 #include <array> 
+#include <sstream>
 
 namespace CE::Math
     {
@@ -15,6 +17,80 @@ namespace CE::Math
         }
 
     Matrix4::Matrix4 ( const std::array<float, 16> & elements ) : elements ( elements ) { }
+
+    Matrix4 Matrix4::PerspectiveGLSL ( float fov, float aspect, float near, float far )
+        {
+        Matrix4 result;
+
+        float tanHalfFov = std::tan ( fov / 2.0f );
+        float range = near - far;
+
+        // Row-major perspective matrix
+        result.elements[ 0 ] = 1.0f / ( aspect * tanHalfFov );
+        result.elements[ 5 ] = 1.0f / tanHalfFov;
+        result.elements[ 10 ] = ( -near - far ) / range;
+        result.elements[ 11 ] = 1.0f;
+        result.elements[ 14 ] = ( 2.0f * far * near ) / range;
+        result.elements[ 15 ] = 0.0f;
+
+        // Остальные элементы = 0
+        return result;
+        }
+
+    Matrix4 Matrix4::LookAtGLSL ( const Vector3 & eye, const Vector3 & target, const Vector3 & up )
+        {
+        Vector3 zAxis = ( target - eye ).Normalized ();
+        Vector3 xAxis = up.Cross ( zAxis ).Normalized ();
+        Vector3 yAxis = zAxis.Cross ( xAxis );
+
+        Matrix4 result ( 1.0f );
+
+        // Row-major lookat matrix
+        result.elements[ 0 ] = xAxis.x;
+        result.elements[ 1 ] = xAxis.y;
+        result.elements[ 2 ] = xAxis.z;
+        result.elements[ 3 ] = -xAxis.Dot ( eye );
+
+        result.elements[ 4 ] = yAxis.x;
+        result.elements[ 5 ] = yAxis.y;
+        result.elements[ 6 ] = yAxis.z;
+        result.elements[ 7 ] = -yAxis.Dot ( eye );
+
+        result.elements[ 8 ] = zAxis.x;
+        result.elements[ 9 ] = zAxis.y;
+        result.elements[ 10 ] = zAxis.z;
+        result.elements[ 11 ] = -zAxis.Dot ( eye );
+
+        return result;
+        }
+
+    void Matrix4::DebugPrint ( const char * name ) const
+        {
+        std::stringstream ss;
+        ss << name << ":\n";
+        for (int row = 0; row < 4; ++row)
+            {
+            ss << "  ";
+            for (int col = 0; col < 4; ++col)
+                {
+                ss << std::fixed << std::setprecision ( 3 ) << std::setw ( 8 )
+                    << At ( row, col ) << " ";
+                }
+            ss << "\n";
+            }
+        CE_CORE_DEBUG ( "{}", ss.str () );
+        }
+
+    bool Matrix4::IsValid () const
+        {
+        for (size_t i = 0; i < 16; ++i)
+            {
+            if (!std::isfinite ( elements[ i ] ))
+                return false;
+            }
+        return true;
+        }
+
 
     Matrix4 Matrix4::operator+( const Matrix4 & other ) const {
         Matrix4 result;

@@ -203,9 +203,8 @@ namespace CE
         Math::Matrix4 rotation = rotQuat.ToMatrix ();
         Math::Matrix4 scale = Math::Matrix4::Scale ( Scale );
 
-        // ИСПРАВЛЕНИЕ: Правильный порядок для вашей системы - Scale * Rotation * Translation
-        // Из тестов видно, что S * T дает масштабированную трансляцию, что и нужно
-        CachedLocalTransform = scale * rotation * translation;
+        // ИСПРАВЛЕНИЕ: Правильный порядок - Translation * Rotation * Scale
+        CachedLocalTransform = translation * rotation * scale;
 
         // ОТЛАДОЧНЫЙ ВЫВОД
         CE_DEBUG ( "=== Transform Update: {} ===", GetName () );
@@ -217,6 +216,9 @@ namespace CE
         Math::Vector4 worldPoint = CachedLocalTransform * testPoint;
         CE_DEBUG ( "Local (0,0,0) -> World ({:.1f}, {:.1f}, {:.1f})",
                    worldPoint.x, worldPoint.y, worldPoint.z );
+
+          // Детальная диагностика матриц
+        CachedLocalTransform.DebugPrint ( "Local Transform" );
 
         bTransformDirty = false;
         }

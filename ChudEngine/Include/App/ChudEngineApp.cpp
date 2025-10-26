@@ -10,7 +10,7 @@
 
 void ChudEngineApp::SetupCamera ()
     {
-    CameraPosition = CE::Math::Vector3 ( 0.0f, 0.0f, 10.0f );
+    CameraPosition = CE::Math::Vector3 ( 0.0f, 0.0f, 2.0f );
     CameraTarget = CE::Math::Vector3 ( 0.0f, 0.0f, 0.0f );
     CameraFOV = 45.0f;
 
@@ -25,7 +25,6 @@ void ChudEngineApp::SetupCamera ()
         CheckCommonMatrixProblems ();
         }
     }
-
 class CTestActor : public CE::CEActor
     {
     public:
@@ -49,21 +48,21 @@ class CTestActor : public CE::CEActor
             CE::CEActor::BeginPlay ();
             CE_DEBUG ( "CTestActor '{}' BeginPlay", GetName () );
 
-            // Устанавливаем позицию и масштаб
+            // ПРИБЛИЖАЕМ К КАМЕРЕ
             auto * transform = GetTransform ();
             if (transform)
                 {
-                transform->SetPosition ( CE::Math::Vector3 ( 0.5f, 0.5f, 0.0f ) );
+                transform->SetPosition ( CE::Math::Vector3 ( 2.0f, 0.0f, -5.0f ) ); // Ближе!
                 transform->SetScale ( 1.0f );
                 }
 
-                // Устанавливаем вершины треугольника
+                // УВЕЛИЧИВАЕМ ВЕРШИНЫ ТРЕУГОЛЬНИКА
             if (MeshComponent)
                 {
                 std::vector<CE::CEMeshComponent::Vertex> vertices = {
-                    {{0.0f, -0.3f, 0.0f}, {1.0f, 0.0f, 0.0f}},  // Красный
-                    {{0.3f, 0.3f, 0.0f}, {0.0f, 1.0f, 0.0f}},   // Зеленый
-                    {{-0.3f, 0.3f, 0.0f}, {0.0f, 0.0f, 1.0f}}   // Синий
+                    {{0.0f, -3.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},  // Красный - УВЕЛИЧИЛИ
+                    {{3.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},   // Зеленый - УВЕЛИЧИЛИ
+                    {{-3.0f, 3.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}   // Синий - УВЕЛИЧИЛИ
                     };
 
                 MeshComponent->SetVertices ( vertices );
@@ -78,13 +77,12 @@ class CTestActor : public CE::CEActor
 
             static float rotation = 0.0f;
             rotation += deltaTime * 45.0f;
-          //  GetTransform ()->SetRotation ( CE::Math::Vector3 ( 0.0f, 0.0f, rotation ) );
+            GetTransform ()->SetRotation ( CE::Math::Vector3 ( 0.0f, 0.0f, rotation ) );
             }
 
     private:
         CE::CEMeshComponent * MeshComponent = nullptr;
     };
-
 class CTestActor2 : public CE::CEActor
     {
     public:
@@ -108,22 +106,22 @@ class CTestActor2 : public CE::CEActor
             CE::CEActor::BeginPlay ();
             CE_DEBUG ( "CTestActor2 '{}' BeginPlay", GetName () );
 
-            // Устанавливаем позицию и масштаб
+            // ПРИБЛИЖАЕМ К КАМЕРЕ
             auto * transform = GetTransform ();
             if (transform)
                 {
-                transform->SetPosition ( CE::Math::Vector3 ( -0.5f, -0.5f, 0.0f ) );
+                transform->SetPosition ( CE::Math::Vector3 ( -2.0f, 0.0f, -5.0f ) ); // Ближе!
                 transform->SetScale ( 1.0f );
                 }
 
-                // Устанавливаем вершины и индексы квадрата
+                // УВЕЛИЧИВАЕМ ВЕРШИНЫ КВАДРАТА
             if (MeshComponent)
                 {
                 std::vector<CE::CEMeshComponent::Vertex> vertices = {
-                    {{-0.2f, -0.2f, 0.0f}, {1.0f, 1.0f, 0.0f}},  // Желтый
-                    {{0.2f, -0.2f, 0.0f}, {0.0f, 1.0f, 1.0f}},   // Голубой  
-                    {{0.2f, 0.2f, 0.0f}, {1.0f, 0.0f, 1.0f}},    // Пурпурный
-                    {{-0.2f, 0.2f, 0.0f}, {1.0f, 1.0f, 1.0f}}    // Белый
+                    {{-2.0f, -2.0f, 0.0f}, {1.0f, 1.0f, 0.0f}},  // Желтый - УВЕЛИЧИЛИ
+                    {{2.0f, -2.0f, 0.0f}, {0.0f, 1.0f, 1.0f}},   // Голубой - УВЕЛИЧИЛИ
+                    {{2.0f, 2.0f, 0.0f}, {1.0f, 0.0f, 1.0f}},    // Пурпурный - УВЕЛИЧИЛИ
+                    {{-2.0f, 2.0f, 0.0f}, {1.0f, 1.0f, 1.0f}}    // Белый - УВЕЛИЧИЛИ
                     };
 
                 std::vector<uint32_t> indices = {
@@ -144,7 +142,7 @@ class CTestActor2 : public CE::CEActor
 
             static float rotation = 0.0f;
             rotation -= deltaTime * 95.0f;
-          //  GetTransform ()->SetRotation ( CE::Math::Vector3 ( rotation, -rotation, rotation ) );
+            GetTransform ()->SetRotation ( CE::Math::Vector3 ( rotation, -rotation, rotation ) );
             }
 
     private:
@@ -315,48 +313,21 @@ void ChudEngineApp::InitializeMeshComponents ()
 
 void ChudEngineApp::CreateTestScene ()
     {
-   
-    CE::CEVulkanRenderer * vulkanRenderer = static_cast< CE::CEVulkanRenderer * >( Renderer.get () );
+    // ВРЕМЕННО: Простейший треугольник в центре
+    auto * testActor = new CE::CEActor ( "SimpleTest" );
+    auto * meshComponent = testActor->CreateComponent<CE::CEMeshComponent> ();
 
-    // Создаем основной прямоугольник
-    auto * mainActor = new CE::CEActor ( "TestMeshActor" );
-    auto * mainMeshComponent = mainActor->CreateComponent<CE::CEMeshComponent> ();
-
-    std::vector<CE::CEMeshComponent::Vertex> vertices = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}}, // красный
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},  // зеленый
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},   // синий
-        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 0.0f}}   // желтый
+    // Простой треугольник с яркими цветами
+    std::vector< CE::CEMeshComponent::Vertex > vertices = {
+      { {0.0f, -0.5f, 0.0f} , { 1.0f, 0.0f, 0.0f} },  // нижняя вершина
+      { {0.5f, 0.5f, 0.0f} , {0.0f, 1.0f, 0.0f} },   // правая вершина  
+      { {  -0.5f, 0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f } }   // левая вершина
         };
 
-    std::vector<uint32_t> indices = {
-        0, 1, 2,  // первый треугольник
-        2, 3, 0   // второй треугольник
-        };
+    meshComponent->SetVertices ( vertices );
+    testActor->GetTransform ()->SetPosition ( CE::Math::Vector3 ( 0.0f, 0.0f, -3.0f ) );
 
-    mainMeshComponent->SetVertices ( vertices );
-    mainMeshComponent->SetIndices ( indices );
-
-    // Устанавливаем позицию для основного прямоугольника
-    mainActor->GetTransform ()->SetPosition ( CE::Math::Vector3 ( 0.0f, 0.0f, 0.0f ) );
-
-    // Создаем дополнительные акторы
-    auto * testActor1 = new CTestActor ( "TestTriangle" );
-    auto * testActor2 = new CTestActor2 ( "TestSquare" );
-    
-    mainActor->GetTransform ()->SetPosition ( CE::Math::Vector3 ( 0.0f, 0.0f, 0.0f ) );
-    testActor1->GetTransform ()->SetPosition ( CE::Math::Vector3 ( 1.0f, 0.0f, 0.0f ) );  // Сдвиг по X
-    testActor2->GetTransform ()->SetPosition ( CE::Math::Vector3 ( 0.0f, 1.0f, 0.0f ) );  // Сдвиг по Y
-    
-    // Добавляем ВСЕХ акторов в мир
-    World->SpawnActor ( mainActor );
-    World->SpawnActor ( testActor1 );
-    World->SpawnActor ( testActor2 );
-    
-
-    CE_DEBUG ( "Test scene created with 3 actors" );
-
-    // Инициализируем все меш компоненты
+    World->SpawnActor ( testActor );
+    CE_DEBUG ( "Simple test scene created with 1 triangle" );
     InitializeMeshComponents ();
-  
     }

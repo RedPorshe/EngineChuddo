@@ -68,6 +68,21 @@ namespace CE::Math
             // View matrix
             static Matrix4 LookAt ( const Vector3 & eye, const Vector3 & target, const Vector3 & up );
 
+              // Диагностические методы
+            void DebugPrint ( const char * name = "Matrix4" ) const;
+            bool IsValid () const;
+
+            // Для проверки выравнивания
+            static constexpr size_t Size () { return 16 * sizeof ( float ); }
+            static constexpr size_t SizeBytes () { return 16 * sizeof ( float ); }
+
+              // Конвертирует column-major в row-major (для Vulkan/GLSL)
+            Matrix4 ToGLSLCompatible () const { return Transposed (); }
+
+            // Создает матрицы уже в row-major формате
+            static Matrix4 PerspectiveGLSL ( float fov, float aspect, float near, float far );
+            static Matrix4 LookAtGLSL ( const Vector3 & eye, const Vector3 & target, const Vector3 & up );
+
             // Static constants
             static const Matrix4 Zero;
             static const Matrix4 IdentityMatrix;

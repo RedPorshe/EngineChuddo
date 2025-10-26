@@ -13,10 +13,19 @@ namespace CE
 
     struct MatrixPushConstants
         {
-        Math::Matrix4 modelMatrix;
-        Math::Matrix4 viewProjectionMatrix;
+            // Для column-major матриц НЕ нужно транспонировать!
+        Math::Matrix4 modelMatrix;        // 64 байта
+        Math::Matrix4 viewProjectionMatrix; // 64 байта
+
+        MatrixPushConstants ()
+            : modelMatrix ( Math::Matrix4::Identity () )
+            , viewProjectionMatrix ( Math::Matrix4::Identity () )
+            {
+            }
         };
 
+        // Проверка размера
+    static_assert( sizeof ( MatrixPushConstants ) == 128, "MatrixPushConstants size mismatch!" );
 
     struct PipelineConfig
         {
