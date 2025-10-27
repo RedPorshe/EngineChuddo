@@ -1,7 +1,5 @@
-// Source/Runtime/Core/CEObject/CEEvent.hpp
 #pragma once
-
-#include "CEObject.hpp"
+#include "Core/CEObject/CEObject.hpp"
 
 namespace CE
     {

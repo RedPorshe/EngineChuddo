@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "Core/Logger.h"
+#include "Utils/Logger.hpp"
 
 namespace CE
     {

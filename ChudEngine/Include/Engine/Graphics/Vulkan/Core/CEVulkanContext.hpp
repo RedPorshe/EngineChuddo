@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
 #include "Core/Containers/CEArray.hpp"
-#include "VulkanDevice.hpp"
+#include "Graphics/Vulkan/Core/VulkanDevice.hpp"
 #include <memory>
 
 namespace CE
@@ -36,7 +36,7 @@ namespace CE
 
             // Validation layers (debug only)
 #ifdef _DEBUG
-            const CEArray<const char *> m_ValidationLayers = {
+            const CEArray<const char *> m_ValidationLayers = { 
                 "VK_LAYER_KHRONOS_validation"
                 };
 #endif

@@ -1,5 +1,5 @@
 #include "Platform/Window/CEWindow.hpp"
-#include "Core/Logger.h"
+#include "Utils/Logger.hpp"
 
 namespace CE
     {

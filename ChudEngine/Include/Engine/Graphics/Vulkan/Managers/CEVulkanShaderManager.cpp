@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/CEVulkanShaderManager.cpp
-#include "CEVulkanShaderManager.hpp"
-#include "CEVulkanContext.hpp"
+#include "Graphics/Vulkan/Managers/CEVulkanShaderManager.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
 #include "ShaderCompiler.h"
 #include <fstream>
 #include <filesystem>

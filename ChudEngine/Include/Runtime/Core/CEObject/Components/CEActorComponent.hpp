@@ -1,4 +1,3 @@
-// Source/Runtime/Core/CEObject/CEActorComponent.hpp
 #pragma once
 #include "Core/CEObject/CEObject.hpp"
 

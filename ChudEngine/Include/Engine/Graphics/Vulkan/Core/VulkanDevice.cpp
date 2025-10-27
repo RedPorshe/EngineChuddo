@@ -1,5 +1,5 @@
-#include "VulkanDevice.hpp"
-#include "Core/Logger.h"
+#include "Graphics/Vulkan/Core/VulkanDevice.hpp"
+#include "Utils/Logger.hpp"
 #include <stdexcept>
 #include <set>
 #include <vector>

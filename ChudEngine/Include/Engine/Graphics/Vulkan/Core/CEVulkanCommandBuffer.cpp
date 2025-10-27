@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/CEVulkanCommandBuffer.cpp
-#include "CEVulkanCommandBuffer.hpp"
-#include "Core/Logger.h"
+#include "Graphics/Vulkan/Core/CEVulkanCommandBuffer.hpp"
+#include "Utils/Logger.hpp"
 #include <stdexcept>
 
 namespace CE
@@ -45,7 +44,7 @@ namespace CE
 
     void CEVulkanCommandBuffer::Shutdown ()
         {
-        auto device = m_Context ? m_Context->GetDevice () : VK_NULL_HANDLE;
+        auto device = m_Context ? m_Context->GetDevice ()->GetDevice( ) : VK_NULL_HANDLE;
         if (!device) return;
 
         if (m_CommandPool != VK_NULL_HANDLE)
@@ -60,8 +59,8 @@ namespace CE
 
     void CEVulkanCommandBuffer::CreateCommandPool ()
         {
-        auto device = m_Context->GetDevice ();
-        auto queueIndices = m_Context->GetQueueFamilyIndices ();
+        auto device = m_Context->GetDevice ()->GetDevice();
+        auto queueIndices = m_Context->GetDevice()->GetQueueFamilyIndices ();
 
         VkCommandPoolCreateInfo poolInfo {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -78,7 +77,7 @@ namespace CE
 
     void CEVulkanCommandBuffer::CreateCommandBuffers ()
         {
-        auto device = m_Context->GetDevice ();
+        auto device = m_Context->GetDevice ()->GetDevice();
 
         // Create one command buffer per frame in flight
         m_CommandBuffers.Resize ( 2 ); // Standard double buffering

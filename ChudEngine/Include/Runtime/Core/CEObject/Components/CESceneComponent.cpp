@@ -1,5 +1,3 @@
-// Source/Runtime/Core/CEObject/CESceneComponent.cpp
-
 #include "Core/CEObject/Components/CESceneComponent.hpp"
 
 namespace CE

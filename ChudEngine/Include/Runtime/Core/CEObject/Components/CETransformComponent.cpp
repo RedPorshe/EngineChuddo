@@ -1,5 +1,5 @@
-#include "CETransformComponent.hpp"
-#include "Core/Logger.h"
+#include "Core/CEObject/Components/CETransformComponent.hpp"
+#include "Utils/Logger.hpp"
 #include "Math/MathUtils.hpp"
 #include "Math/Vector.hpp"
 #include "Math/Matrix.hpp"

@@ -1,4 +1,3 @@
-// Source/Framework/Core/Logger.h
 #pragma once
 
 #include <iostream>

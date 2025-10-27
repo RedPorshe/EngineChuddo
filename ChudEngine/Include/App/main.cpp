@@ -1,6 +1,6 @@
 #include "ChudEngineApp.hpp"
 #include "Utils/FileSystem.hpp"
-#include "Core/Logger.h"
+#include "Utils/Logger.hpp"
 
 
 int main ()

@@ -1,8 +1,8 @@
-// Runtime/Renderer/Vulkan/CEVulkanCommandBuffer.hpp
 #pragma once
 #include <vulkan/vulkan.h>
 #include "Core/Containers/CEArray.hpp"
-#include "CEVulkanContext.hpp"
+
+#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
 
 namespace CE
     {

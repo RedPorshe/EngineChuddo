@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/Pipelines/CELightPipeline.cpp
-#include "CELightPipeline.hpp"
-#include "Core/Logger.h"
+#include "Graphics/Vulkan/PipeLines/CELightPipeline.hpp"
+#include "Utils/Logger.hpp"
 
 namespace CE
     {

@@ -1,6 +1,7 @@
-#include "CEVulkanBuffer.hpp"
-#include "CEVulkanContext.hpp"
-#include "Core/Logger.h"
+
+#include "Graphics/Vulkan/Core/CEVulkanBuffer.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
+#include "Utils/Logger.hpp"
 #include <stdexcept>
 #include <cstring>
 
@@ -64,7 +65,7 @@ namespace CE
         m_Context = context;
         m_Size = size;
 
-        VkDevice device = m_Context->GetDevice ();
+        VkDevice device = m_Context->GetDevice ()->GetDevice();
 
         // Создаем буфер
         VkBufferCreateInfo bufferInfo {};
@@ -137,17 +138,17 @@ namespace CE
         memoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         memoryRange.memory = m_Memory;
         memoryRange.size = VK_WHOLE_SIZE;
-        vkFlushMappedMemoryRanges ( m_Context->GetDevice (), 1, &memoryRange );
+        vkFlushMappedMemoryRanges ( m_Context->GetDevice ()->GetDevice(), 1, &memoryRange);
 
         CE_CORE_DEBUG ( "Uploaded {} bytes to buffer", size );
         }
 
     void CEVulkanBuffer::Destroy ()
         {
-        if (!m_Context || !m_Context->GetDevice ())
+        if (!m_Context || !m_Context->GetDevice ()->GetDevice())
             return;
 
-        VkDevice device = m_Context->GetDevice ();
+        VkDevice device = m_Context->GetDevice ()->GetDevice ();
 
         if (m_IsMapped)
             {
@@ -180,7 +181,7 @@ namespace CE
             return 0;
 
         VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties ( m_Context->GetPhysicalDevice (), &memProperties );
+        vkGetPhysicalDeviceMemoryProperties ( m_Context->GetDevice()-> GetPhysicalDevice (), &memProperties );
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
             {

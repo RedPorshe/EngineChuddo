@@ -1,9 +1,8 @@
-// Source/Runtime/Core/CEObject/CEWorld.hpp
 #pragma once
 
-#include "CEObject.hpp"
-#include "CEActor.hpp"
-#include "CETickManager.hpp"  // Добавляем include
+#include "Core/CEObject/CEObject.hpp"
+#include "Core/CEObject/CEActor.hpp"
+#include "Core/CEObject/CETickManager.hpp"  
 #include <vector>
 #include <unordered_map>
 #include <memory>

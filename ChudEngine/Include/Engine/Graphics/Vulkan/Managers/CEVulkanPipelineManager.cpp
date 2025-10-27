@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/CEVulkanPipelineManager.cpp
-#include "CEVulkanPipelineManager.hpp"
-#include "Core/Logger.h"
+#include "Graphics/Vulkan/Managers/CEVulkanPipelineManager.hpp"
+#include "Utils/Logger.hpp"
 #include <stdexcept>
 
 namespace CE

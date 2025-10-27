@@ -2,7 +2,7 @@
 #include "CEWorldRenderer.hpp"
 #include "Core/Logger.h"
 #include "Core/CEObject/Components/CEMeshComponent.hpp"
-#include "Graphics/Vulkan/CEVulkanRenderer.hpp" 
+#include "Graphics/Vulkan/Core/CEVulkanRenderer.hpp" 
 #include "Graphics/Vulkan/Pipelines/CEStaticMeshPipeline.hpp"
 #include <set>
 

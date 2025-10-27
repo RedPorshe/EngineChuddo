@@ -1,21 +1,19 @@
-// Runtime/Core/CEObject/CEActor.cpp
 #include "Core/CEObject/CEActor.hpp"
 
 namespace CE
     {
     CEActor::CEActor ( const std::string & ActorName ) : CEObject ( ActorName )
-        {
-        // Автоматически создаем компонент трансформации для каждого актора
+        {       
         TransformComponent = CreateComponent<CETransformComponent> ();
         TransformComponent->SetName ( Name + "_Transform" );
 
         CE_DEBUG ( " CEActor '{}' created (ID: {}) with transform", Name, UniqueID );
-        bInitialized = true; // Актор инициализирован при создании
+        bInitialized = true; 
         }
 
     CEActor::~CEActor ()
         {
-        bPendingKill = true; // Помечаем для уничтожения
+        bPendingKill = true; 
         CE_DEBUG ( " CEActor '{}' destroyed", Name );
         }
 

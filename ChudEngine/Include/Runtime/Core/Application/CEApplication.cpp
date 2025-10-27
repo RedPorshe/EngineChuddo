@@ -1,6 +1,5 @@
-// Runtime/Core/Application/CEApplication.cpp
 #include "Core/Application/CEApplication.hpp"
-#include "Core/Logger.h"
+#include "Utils/Logger.hpp"
 
 namespace CE
     {

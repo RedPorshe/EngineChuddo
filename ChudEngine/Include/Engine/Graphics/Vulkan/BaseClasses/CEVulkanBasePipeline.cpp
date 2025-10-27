@@ -1,7 +1,7 @@
 // Runtime/Renderer/Vulkan/CEVulkanBasePipeline.cpp
 #include "CEVulkanBasePipeline.hpp"
 #include "Core/CEObject/Components/CEMeshComponent.hpp"
-#include "Core/Logger.h"
+#include "Utils/Logger.hpp"
 #include <stdexcept>
 
 namespace CE

@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/Pipelines/CESkeletalMeshPipeline.cpp
-#include "CESkeletalMeshPipeline.hpp"
-#include "Core/Logger.h"
+#include "Graphics/Vulkan/PipeLines/CESkeletalMeshPipeline.hpp"
+#include "Utils/Logger.hpp"
 
 namespace CE
     {

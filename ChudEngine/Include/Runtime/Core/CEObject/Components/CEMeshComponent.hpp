@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/CEObject/Components/CEComponent.hpp"
-#include "Graphics/Vulkan/CEVulkanBuffer.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanBuffer.hpp"
 #include "Math/Vector.hpp"
 #include <memory>
 #include <array>
@@ -10,8 +10,8 @@
 namespace CE
     {
 
-    class CEVulkanRenderer; // Forward declaration
-    class CEVulkanContext;  // Forward declaration
+    class CEVulkanRenderer; 
+    class CEVulkanContext;  
 
     class CEMeshComponent : public CEComponent
         {

@@ -1,7 +1,6 @@
-// Source/Runtime/Core/CEObject/CETickManager.hpp
 #pragma once
 
-#include "CEObject.hpp"
+#include "Core/CEObject/CEObject.hpp"
 #include <vector>
 #include <functional>
 #include <unordered_map>

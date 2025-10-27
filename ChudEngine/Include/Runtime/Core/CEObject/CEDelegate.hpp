@@ -1,7 +1,5 @@
-// Source/Runtime/Core/CEObject/CEDelegate.hpp
 #pragma once
-
-#include "CEObject.hpp"
+#include "Core/CEObject/CEObject.hpp"
 #include <functional>
 #include <vector>
 #include <memory>

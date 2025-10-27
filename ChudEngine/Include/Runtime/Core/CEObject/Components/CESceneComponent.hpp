@@ -1,7 +1,5 @@
-// Source/Runtime/Core/CEObject/CESceneComponent.hpp
 #pragma once
-
-#include "CEActorComponent.hpp"
+#include "Core/CEObject/Components/CEActorComponent.hpp"
 #include "Math/Vector.hpp"
 #include "Math/Quaternion.hpp"
 #include "Math/Matrix.hpp"

@@ -1,11 +1,11 @@
-// Runtime/Renderer/Vulkan/CEVulkanResourceManager.hpp
 #pragma once
 #include <vulkan/vulkan.h>
 #include <memory>
 #include <unordered_map>
 #include <string>
-#include "CEVulkanBuffer.hpp"
-#include "Core/Logger.h"
+
+#include "Graphics/Vulkan/Core/CEVulkanBuffer.hpp"
+#include "Utils/Logger.hpp"
 
 namespace CE
     {

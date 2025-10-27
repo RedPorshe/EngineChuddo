@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/Pipelines/CEStaticMeshPipeline.hpp
 #pragma once
-#include "../CEVulkanBasePipeline.hpp"
+#include "Graphics/Vulkan/BaseClasses/CEVulkanBasePipeline.hpp"
 #include <memory>
 
 namespace CE

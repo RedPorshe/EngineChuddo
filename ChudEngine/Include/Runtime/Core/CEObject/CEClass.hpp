@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Runtime/Core/CEObject/CEObject.hpp"
+#include "Core/CEObject/CEObject.hpp"
 #include <string>
 #include <vector>
 #include <functional>

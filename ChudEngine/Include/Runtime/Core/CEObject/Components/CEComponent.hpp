@@ -1,4 +1,3 @@
-// Runtime/Core/Objects/CEComponent.hpp
 #pragma once
 
 #include "Core/CEObject/CEObject.hpp"

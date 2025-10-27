@@ -1,4 +1,3 @@
-// Runtime/Core/CEObject/CEComponent.cpp
 #include "Core/CEObject/Components/CEComponent.hpp"
 #include "Core/CEObject/CEActor.hpp"
 

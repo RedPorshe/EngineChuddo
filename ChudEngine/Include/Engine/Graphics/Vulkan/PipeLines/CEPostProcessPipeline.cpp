@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/Pipelines/CEPostProcessPipeline.cpp
-#include "CEPostProcessPipeline.hpp"
-#include "Core/Logger.h"
+#include "Graphics/Vulkan/PipeLines/CEPostProcessPipeline.hpp"
+#include "Utils/Logger.hpp"
 
 namespace CE
     {

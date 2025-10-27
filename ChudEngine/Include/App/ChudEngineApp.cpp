@@ -1,6 +1,6 @@
 #include "ChudEngineApp.hpp"
 #include "Core/CEObject/CEActor.hpp"
-#include "Graphics/Vulkan/CEVulkanRenderer.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanRenderer.hpp"
 #include "Math/Vector.hpp"
 #include "Math/Matrix.hpp"
 #include "Core/CEObject/CEWorld.hpp"

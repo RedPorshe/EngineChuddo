@@ -1,6 +1,6 @@
 #pragma once
-#include "CEVulkanBuffer.hpp"
-#include "VulkanDevice.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanBuffer.hpp"
+#include "Graphics/Vulkan/Core/VulkanDevice.hpp"
 #include <memory>
 
 namespace CE

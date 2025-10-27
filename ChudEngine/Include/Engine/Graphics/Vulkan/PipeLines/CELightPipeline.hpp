@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/Pipelines/CELightPipeline.hpp
 #pragma once
-#include "../CEVulkanBasePipeline.hpp"
+#include "Graphics/Vulkan/BaseClasses/CEVulkanBasePipeline.hpp"
 
 namespace CE
     {

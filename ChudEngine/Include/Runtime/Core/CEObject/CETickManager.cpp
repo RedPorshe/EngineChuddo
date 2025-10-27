@@ -1,5 +1,5 @@
 #include "Core/CEObject/CETickManager.hpp"
-#include "Core/Logger.h"
+#include "Utils/Logger.hpp"
 
 namespace CE
     {

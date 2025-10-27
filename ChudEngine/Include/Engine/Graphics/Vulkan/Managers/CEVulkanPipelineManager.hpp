@@ -1,13 +1,13 @@
-// Runtime/Renderer/Vulkan/CEVulkanPipelineManager.hpp
 #pragma once
 #include <unordered_map>
 #include <memory>
-#include "CEVulkanBasePipeline.hpp"
-#include "CEVulkanShaderManager.hpp"
-#include "Pipelines/CEStaticMeshPipeline.hpp"
-#include "Pipelines/CESkeletalMeshPipeline.hpp"
-#include "Pipelines/CELightPipeline.hpp"
-#include "Pipelines/CEPostProcessPipeline.hpp"
+#include "Graphics/Vulkan/BaseClasses/CEVulkanBasePipeline.hpp"
+#include "Graphics/Vulkan/Managers/CEVulkanShaderManager.hpp"
+
+#include "Graphics/Vulkan/PipeLines/CEStaticMeshPipeline.hpp"
+#include "Graphics/Vulkan/Pipelines/CESkeletalMeshPipeline.hpp"
+#include "Graphics/Vulkan/Pipelines/CELightPipeline.hpp"
+#include "Graphics/Vulkan/Pipelines/CEPostProcessPipeline.hpp"
 
 namespace CE
     {

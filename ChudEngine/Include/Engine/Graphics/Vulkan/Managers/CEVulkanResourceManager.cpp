@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/CEVulkanResourceManager.cpp
-#include "CEVulkanResourceManager.hpp"
-#include "CEVulkanContext.hpp"
+#include "Graphics/Vulkan/Managers/CEVulkanResourceManager.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
 
 namespace CE
     {

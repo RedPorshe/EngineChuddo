@@ -1,9 +1,8 @@
-// Runtime/Renderer/Vulkan/CEVulkanSync.cpp
-#include "CEVulkanSync.hpp"
-#include "CEVulkanContext.hpp"
-#include "CEVulkanSwapchain.hpp"
-#include "CEVulkanCommandBuffer.hpp"
-#include "Core/Logger.h"
+#include "Graphics/Vulkan/Core/CEVulkanSync.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanSwapchain.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanCommandBuffer.hpp"
+#include "Utils/Logger.hpp"
 #include <stdexcept>
 
 
@@ -39,7 +38,7 @@ namespace CE
 
     void CEVulkanSync::Shutdown ()
         {
-        auto device = m_Context ? m_Context->GetDevice () : VK_NULL_HANDLE;
+        auto device = m_Context ? m_Context->GetDevice ()->GetDevice() : VK_NULL_HANDLE;
         if (!device) return;
 
         for (size_t i = 0; i < m_InFlightFences.Size (); i++)
@@ -67,7 +66,7 @@ namespace CE
 
     void CEVulkanSync::CreateSyncObjects ()
         {
-        auto device = m_Context->GetDevice ();
+        auto device = m_Context->GetDevice ()->GetDevice();
 
         m_ImageAvailableSemaphores.Resize ( m_MaxFramesInFlight );
         m_RenderFinishedSemaphores.Resize ( m_MaxFramesInFlight );
@@ -95,7 +94,7 @@ namespace CE
 
     VkResult CEVulkanSync::AcquireNextImage ( CEVulkanSwapchain * swapchain, uint32_t * imageIndex )
         {
-        auto device = m_Context->GetDevice ();
+        auto device = m_Context->GetDevice ()->GetDevice();
 
         // Wait for the frame to be finished
         vkWaitForFences ( device, 1, &m_InFlightFences[ m_CurrentFrame ], VK_TRUE, UINT64_MAX );
@@ -106,8 +105,8 @@ namespace CE
 
     bool CEVulkanSync::SubmitFrame ( CEVulkanCommandBuffer * commandBuffer, CEVulkanSwapchain * swapchain, uint32_t imageIndex )
         {
-        auto device = m_Context->GetDevice ();
-        auto graphicsQueue = m_Context->GetGraphicsQueue ();
+        auto device = m_Context->GetDevice ()->GetDevice();
+        auto graphicsQueue = m_Context->GetDevice()-> GetGraphicsQueue ();
 
         // Reset fence before submitting
         vkResetFences ( device, 1, &m_InFlightFences[ m_CurrentFrame ] );

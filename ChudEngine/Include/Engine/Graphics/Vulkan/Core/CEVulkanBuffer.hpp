@@ -1,10 +1,12 @@
 #pragma once
 #include <vulkan/vulkan.h>
 #include <memory>
+#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
 
 namespace CE
     {
     class VulkanDevice;
+    class CEVulkanContext;
 
     class CEVulkanBuffer
         {
@@ -20,16 +22,12 @@ namespace CE
             CEVulkanBuffer ( CEVulkanBuffer && other ) noexcept;
             CEVulkanBuffer & operator=( CEVulkanBuffer && other ) noexcept;
 
-            bool Create (
-                VulkanDevice * device,
-                VkDeviceSize size,
-                VkBufferUsageFlags usage,
-                VkMemoryPropertyFlags properties
-            );
+            bool Create ( CEVulkanContext * context, VkDeviceSize size,
+                          VkBufferUsageFlags usage, VkMemoryPropertyFlags properties );
 
             void UploadData ( const void * data, VkDeviceSize size );
             void Destroy ();
-
+            uint32_t FindMemoryType ( uint32_t typeFilter, VkMemoryPropertyFlags properties );
             // Геттеры
             VkBuffer GetBuffer () const { return m_Buffer; }
             VkDeviceMemory GetMemory () const { return m_Memory; }
@@ -42,6 +40,7 @@ namespace CE
             VkBuffer m_Buffer = VK_NULL_HANDLE;
             VkDeviceMemory m_Memory = VK_NULL_HANDLE;
             VkDeviceSize m_Size = 0;
+            CEVulkanContext m_Context;
             void * m_MappedData = nullptr;
             bool m_IsMapped = false;
         };

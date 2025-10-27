@@ -1,6 +1,5 @@
-// Runtime/Renderer/Vulkan/Pipelines/CEPostProcessPipeline.hpp
 #pragma once
-#include "../CEVulkanBasePipeline.hpp"
+#include "Graphics/Vulkan/BaseClasses/CEVulkanBasePipeline.hpp"
 
 namespace CE
     {

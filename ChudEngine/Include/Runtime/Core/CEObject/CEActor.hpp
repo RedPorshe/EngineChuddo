@@ -1,16 +1,15 @@
-// Runtime/Core/Objects/CEActor.hpp
 #pragma once
 
-#include "Core/Logger.h"
+#include "Utils/Logger.hpp"
+#include "Core/CEObject/CEObject.hpp"
+#include "Core/CEObject/Components/CEComponent.hpp"
+#include "Core/CEObject/Components/CETransformComponent.hpp"
+#include "Core/Containers/CEArray.hpp"
 #include <algorithm>
 #include <memory>
 #include <vector>
 #include <typeindex>
 #include <unordered_map>
-#include "Core/CEObject/CEObject.hpp"
-#include "Core/CEObject/Components/CEComponent.hpp"
-#include "Core/CEObject/Components/CETransformComponent.hpp"
-#include "Core/Containers/CEArray.hpp"
 
 
 namespace CE

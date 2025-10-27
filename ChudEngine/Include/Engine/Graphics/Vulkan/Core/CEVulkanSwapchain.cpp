@@ -1,7 +1,6 @@
-// Runtime/Renderer/Vulkan/CEVulkanSwapchain.cpp
-#include "CEVulkanSwapchain.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanSwapchain.hpp"
 #include "Platform/Window/CEWindow.hpp"
-#include "Core/Logger.h"
+#include "Utils/Logger.hpp"
 #include <algorithm>
 #include <stdexcept>
 #include <array>
@@ -49,8 +48,8 @@ namespace CE
 
     void CEVulkanSwapchain::CreateSwapchain ( CEWindow * window, VkSwapchainKHR oldSwapchain )
         {
-        auto physicalDevice = m_Context->GetPhysicalDevice ();
-        auto device = m_Context->GetDevice ();
+        auto physicalDevice = m_Context->GetDevice()->GetPhysicalDevice();
+        auto device = m_Context->GetDevice ()->GetDevice();
         auto surface = m_Context->GetSurface ();
 
         // Get swapchain capabilities
@@ -93,7 +92,7 @@ namespace CE
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         // Set up queue families
-        auto queueIndices = m_Context->GetQueueFamilyIndices ();
+        auto queueIndices = m_Context->GetDevice()->GetQueueFamilyIndices();
         uint32_t queueFamilyIndices [] = {
             queueIndices.graphicsFamily.value (),
             queueIndices.presentFamily.value ()
@@ -136,7 +135,7 @@ namespace CE
 
     void CEVulkanSwapchain::CreateImageViews ()
         {
-        auto device = m_Context->GetDevice ();
+        auto device = m_Context->GetDevice ()->GetDevice();
         m_ImageViews.Resize ( m_Images.Size () );
 
         for (uint64_t i = 0; i < m_Images.Size (); i++)
@@ -167,7 +166,7 @@ namespace CE
 
     void CEVulkanSwapchain::CreateRenderPass ()
         {
-        auto device = m_Context->GetDevice ();
+        auto device = m_Context->GetDevice ()->GetDevice();
 
         // Color attachment
         VkAttachmentDescription colorAttachment {};
@@ -186,7 +185,7 @@ namespace CE
 
         // Depth attachment
         VkAttachmentDescription depthAttachment {};
-        depthAttachment.format = m_Context->FindDepthFormat ();
+        depthAttachment.format = m_Context-> GetDevice()-> FindDepthFormat ();
         depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -236,7 +235,7 @@ namespace CE
 
     void CEVulkanSwapchain::CreateFramebuffers ()
         {
-        auto device = m_Context->GetDevice ();
+        auto device = m_Context->GetDevice ()->GetDevice();
         m_Framebuffers.Resize ( m_ImageViews.Size () );
 
         for (uint64_t i = 0; i < m_ImageViews.Size (); i++)
@@ -266,8 +265,8 @@ namespace CE
 
     void CEVulkanSwapchain::CreateDepthResources ()
         {
-        auto device = m_Context->GetDevice ();
-        VkFormat depthFormat = m_Context->FindDepthFormat ();
+        auto device = m_Context->GetDevice ()->GetDevice();
+        VkFormat depthFormat = m_Context->GetDevice()->FindDepthFormat ();
 
         // Create depth image
         VkImageCreateInfo imageInfo {};
@@ -297,7 +296,7 @@ namespace CE
         VkMemoryAllocateInfo allocInfo {};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = m_Context->FindMemoryType ( memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+        allocInfo.memoryTypeIndex = m_Context->GetDevice()->FindMemoryType (memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         if (vkAllocateMemory ( device, &allocInfo, nullptr, &m_DepthImageMemory ) != VK_SUCCESS)
             {
@@ -328,7 +327,7 @@ namespace CE
 
     VkResult CEVulkanSwapchain::AcquireNextImage ( VkSemaphore imageAvailableSemaphore, uint32_t * imageIndex )
         {
-        auto device = m_Context->GetDevice ();
+        auto device = m_Context->GetDevice ()->GetDevice();
         return vkAcquireNextImageKHR (
             device,
             m_Swapchain,
@@ -341,7 +340,7 @@ namespace CE
 
     VkResult CEVulkanSwapchain::Present ( uint32_t imageIndex, VkSemaphore renderFinishedSemaphore )
         {
-        auto presentQueue = m_Context->GetPresentQueue ();
+        auto presentQueue = m_Context->GetDevice()->  GetPresentQueue ();
 
         VkPresentInfoKHR presentInfo {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -410,7 +409,7 @@ namespace CE
 
     void CEVulkanSwapchain::CleanupSwapchain ()
         {
-        auto device = m_Context ? m_Context->GetDevice () : VK_NULL_HANDLE;
+        auto device = m_Context ? m_Context->GetDevice ()->GetDevice() : VK_NULL_HANDLE;
         if (!device) return;
 
         for (auto framebuffer : m_Framebuffers)

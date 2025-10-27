@@ -1,4 +1,3 @@
-// Runtime/Renderer/Vulkan/CEVulkanSync.hpp
 #pragma once
 #include <vulkan/vulkan.h>
 #include "Core/Containers/CEArray.hpp"

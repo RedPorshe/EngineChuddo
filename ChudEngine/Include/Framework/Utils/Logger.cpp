@@ -1,4 +1,3 @@
-// Source/Framework/Core/Logger.cpp
 #include "Logger.hpp"
 #include "FileSystem.hpp"
 

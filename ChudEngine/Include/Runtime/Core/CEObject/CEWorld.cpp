@@ -1,6 +1,6 @@
 #include "Core/CEObject/CEWorld.hpp"
 
-#include "Core/Logger.h"
+#include "Utils/Logger.hpp"
 #include <algorithm>
 
 namespace CE

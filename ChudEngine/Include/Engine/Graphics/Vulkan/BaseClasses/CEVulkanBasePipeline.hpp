@@ -3,8 +3,9 @@
 #include <vulkan/vulkan.h>
 #include <memory>
 #include <string>
-#include "CEVulkanContext.hpp"
-#include "CEVulkanShaderManager.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
+#include "Graphics/Vulkan/Managers/CEVulkanShaderManager.hpp"
+
 #include "Math/Matrix.hpp"
 
 namespace CE

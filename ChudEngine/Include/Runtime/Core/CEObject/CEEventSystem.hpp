@@ -1,9 +1,8 @@
-// Source/Runtime/Core/CEObject/CEEventSystem.hpp
 #pragma once
 
-#include "CEObject.hpp"
-#include "CEDelegate.hpp"
-#include "CEEvent.hpp"  // Добавляем include
+#include "Core/CEObject/CEObject.hpp"
+#include "Core/CEObject/CEDelegate.hpp"
+#include "Core/CEObject/CEEvent.hpp" 
 #include <unordered_map>
 #include <string>
 #include <memory>

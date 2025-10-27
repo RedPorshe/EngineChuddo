@@ -1,8 +1,7 @@
-// Source/Runtime/Core/CEObject/CEEvents.hpp
 #pragma once
-#include "Framework/Math/Vector.hpp"
-#include "CEEvent.hpp"  // Добавляем include базового класса
-#include "CEActor.hpp"
+#include "Math/Vector.hpp"
+#include "Core/CEObject/CEEvent.hpp"
+#include "Core/CEObject/CEActor.hpp"
 
 namespace CE
     {

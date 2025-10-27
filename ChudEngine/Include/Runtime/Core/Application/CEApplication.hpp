@@ -1,15 +1,13 @@
-// Runtime/Core/Application/CEApplication.hpp
 #pragma once
 #include <memory>
 #include "Platform/Window/CEWindow.hpp"
 #include "Core/CEObject/CEWorld.hpp"
 
-#include "Graphics/Vulkan/CEVulkanRenderer.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanRenderer.hpp"
 
 namespace CE
     {
-        // Forward declaration вместо включения абстрактного класса
-  //  class CERenderer;
+
 
     class CEApplication
         {
@@ -31,7 +29,7 @@ namespace CE
             
         protected:
             std::unique_ptr<CEWindow> Window;
-            std::unique_ptr<CERenderer> Renderer; // Оставить как указатель на интерфейс
+            std::unique_ptr<CERenderer> Renderer; 
             std::unique_ptr<CEWorld> World;
 
         private:

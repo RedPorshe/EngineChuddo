@@ -1,6 +1,7 @@
-#include "CEMeshComponent.hpp"
-#include "Graphics/Vulkan/CEVulkanRenderer.hpp"
-#include "Core/Logger.h"
+#include "Core/CEObject/Components/CEMeshComponent.hpp"
+#include "Core/CEObject/CEActor.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanRenderer.hpp"
+#include "Utils/Logger.hpp"
 #include <array>
 
 namespace CE

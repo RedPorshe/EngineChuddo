@@ -1,14 +1,17 @@
 // Runtime/Renderer/Vulkan/CEVulkanRenderer.hpp
 #pragma once
 #include <vulkan/vulkan.h>
-#include "../CERenderer.hpp"
-#include "CEVulkanContext.hpp"
-#include "CEVulkanSwapchain.hpp"
-#include "CEVulkanSync.hpp"
-#include "CEVulkanCommandBuffer.hpp"
-#include "CEVulkanPipelineManager.hpp"
-#include "CEVulkanShaderManager.hpp"
-#include "CEVulkanResourceManager.hpp"
+#include "Graphics/CERenderer.hpp"
+
+
+#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanSwapchain.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanSync.hpp"
+#include "Graphics/Vulkan/Core/CEVulkanCommandBuffer.hpp"
+
+#include "Graphics/Vulkan/Managers/CEVulkanPipelineManager.hpp"
+#include "Graphics/Vulkan/Managers/CEVulkanShaderManager.hpp"
+#include "Graphics/Vulkan/Managers/CEVulkanResourceManager.hpp"
 #include "Math/Vector.hpp"
 #include "Math/Matrix.hpp"
 #include <memory>

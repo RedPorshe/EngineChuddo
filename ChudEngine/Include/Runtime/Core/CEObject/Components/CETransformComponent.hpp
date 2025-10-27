@@ -1,6 +1,4 @@
-// Runtime/Core/CEObject/Components/CETransformComponent.hpp
 #pragma once
-
 #include "Core/CEObject/Components/CEComponent.hpp"
 #include "Math/Vector.hpp"
 #include "Math/Matrix.hpp"

@@ -1,5 +1,4 @@
-// Runtime/Renderer/Vulkan/Pipelines/CEStaticMeshPipeline.cpp
-#include "CEStaticMeshPipeline.hpp"
+#include "Graphics/Vulkan/PipeLines/CEStaticMeshPipeline.hpp"
 
 namespace CE
     {
