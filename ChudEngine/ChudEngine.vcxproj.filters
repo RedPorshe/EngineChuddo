@@ -6,7 +6,6 @@
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanBuffer.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanCommandBuffer.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanContext.cpp" />
-    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanPipeline.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanRenderer.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanSwapchain.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanSync.cpp" />
@@ -37,6 +36,9 @@
     <ClCompile Include="Include\Engine\Graphics\Vulkan\PipeLines\CEPostProcessPipeline.cpp" />
     <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanBasePipeline.cpp" />
     <ClCompile Include="Include\Engine\Graphics\CEWorldRenderer.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanShaderManager.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\CEVulkanResourceManager.cpp" />
+    <ClCompile Include="Include\Engine\Graphics\Vulkan\VulkanDevice.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\App\ChudEngineApp.hpp" />
@@ -44,7 +46,6 @@
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanBuffer.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanCommandBuffer.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanContext.hpp" />
-    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanPipeline.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanRenderer.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanSwapchain.hpp" />
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanSync.hpp" />
@@ -85,6 +86,10 @@
     <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanPipelineManager.hpp" />
     <ClInclude Include="Include\Engine\Graphics\CEWorldRenderer.hpp" />
     <ClInclude Include="Include\Framework\Math\MathFunctions.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanShaderManager.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\CEVulkanResourceManager.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\VulkanDevice.hpp" />
+    <ClInclude Include="Include\Engine\Graphics\Vulkan\VulkanResourceFactory.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Shaders\Vulkan\triangle.vert" />

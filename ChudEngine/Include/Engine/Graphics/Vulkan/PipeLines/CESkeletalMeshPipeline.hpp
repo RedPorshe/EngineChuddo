@@ -7,9 +7,9 @@ namespace CE
     class CESkeletalMeshPipeline : public CEVulkanBasePipeline
         {
         public:
-            CESkeletalMeshPipeline ( CEVulkanContext * context );
-
-            bool Initialize ( VkRenderPass renderPass ) override;
+            CESkeletalMeshPipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager );
+            ~CESkeletalMeshPipeline () = default;
+           
 
             // Skeletal animation specific methods
             void UpdateBoneMatrices ( uint32_t currentImage, const std::vector<Math::Matrix4> & boneMatrices );
@@ -23,7 +23,7 @@ namespace CE
                 alignas( 16 ) Math::Matrix4 bones[ 100 ]; // Max bones
                 };
 
-            std::vector<std::unique_ptr<CEVulkanBuffer>> m_BoneUniformBuffers;
+         //   std::vector<std::unique_ptr<CEVulkanBuffer>> m_BoneUniformBuffers;
             std::vector<void *> m_BoneUniformBuffersMapped;
         };
     }

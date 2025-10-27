@@ -4,25 +4,16 @@
 
 namespace CE
     {
-    CEPostProcessPipeline::CEPostProcessPipeline ( CEVulkanContext * context )
-        : CEVulkanBasePipeline ( context,
-                                 PipelineConfig {
-                                     "PostProcess",
-                                     VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                                     VK_POLYGON_MODE_FILL,
-                                     VK_CULL_MODE_NONE, // Post-process usually doesn't use culling
-                                     VK_FRONT_FACE_COUNTER_CLOCKWISE,
-                                     false, // depth test - post-process doesn't need depth
-                                     false, // depth write
-                                     true   // blend enable - post-process might use blending
-                                 } )
+    CEPostProcessPipeline::CEPostProcessPipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager )
+        : CEVulkanBasePipeline ( context, shaderManager, PipelineConfig {"PostProcessPipeline" } )
         {
+        
+          // Устанавливаем специфичные для PostProcessPipeline шейдеры
+      //  SetVertexShader ( "Resources/Shaders/Vulkan/postprocess.vert" );
+      //  SetFragmentShader ( "Resources/Shaders/Vulkan/postprocess.frag" );
         }
 
-    bool CEPostProcessPipeline::Initialize ( VkRenderPass renderPass )
-        {
-        return CEVulkanBasePipeline::Initialize ( renderPass );
-        }
+   
 
     bool CEPostProcessPipeline::CreateDescriptorSetLayout ()
         {

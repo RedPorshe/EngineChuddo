@@ -1,13 +1,9 @@
 // Runtime/Renderer/Vulkan/CEVulkanRenderer.cpp
 #include "CEVulkanRenderer.hpp"
-#include "CEVulkanContext.hpp"
-#include "CEVulkanSwapchain.hpp"
-#include "CEVulkanSync.hpp"
-#include "CEVulkanPipeline.hpp"
-#include "CEVulkanCommandBuffer.hpp"
-#include "Core/CEObject/Components/CEMeshComponent.hpp"
-#include "Math/Matrix.hpp"
-#include "Math/MathUtils.hpp" 
+#include "Platform/Window/CEWindow.hpp"
+#include "Core/Application/CEApplication.hpp"
+#include "Core/CEObject/CEWorld.hpp"
+#include "Math/MathUtils.hpp"
 #include "Core/Logger.h"
 #include <stdexcept>
 
@@ -17,72 +13,63 @@ namespace CE
                                                  const Math::Vector3 & target,
                                                  float fov )
         {
-        float aspectRatio = static_cast< float >( Window->GetWidth () ) / static_cast< float >( Window->GetHeight () );
+        m_CameraPosition = position;
+        m_CameraTarget = target;
+        m_CameraFOV = fov;
 
-   // Используйте перспективную проекцию вместо ортографической
-        ProjectionMatrix = Math::Matrix4::Perspective (
-            Math::ToRadians ( 60.0f ),  // field of view
-            aspectRatio,            // aspect ratio  
-            0.1f,                   // near plane
-            100.0f                  // far plane
-        );
-
-        ViewMatrix = Math::Matrix4::LookAt (
-            Math::Vector3 ( 0.0f, 0.0f, 1.0f ),
-            Math::Vector3 ( 0.0f, 0.0f, 0.0f ),
-            Math::Vector3 ( 0.0f, 1.0f, 0.0f )
-        );
-        }
-
-    void CEVulkanRenderer::ReloadShaders ()
-        {
-        if (!Initialized || !PipelineManager) return;
-
-        CE_CORE_DEBUG ( "Reloading shaders..." );
-
-        // Ждем завершения операций устройства
-        vkDeviceWaitIdle ( Context->GetDevice () );
-
-        // Сохраняем текущие матрицы
-        auto viewMatrix = ViewMatrix;
-        auto projMatrix = ProjectionMatrix;
-
-        // Перезагружаем все пайплайны через менеджер
-        PipelineManager->ReloadAllPipelines ();
-
-        // Обновляем матрицы во всех пайплайнах
-        auto staticMeshPipeline = PipelineManager->GetStaticMeshPipeline ();
-        if (staticMeshPipeline)
+        if (m_Window)
             {
-            staticMeshPipeline->SetViewMatrix ( viewMatrix );
-            staticMeshPipeline->SetProjectionMatrix ( projMatrix );
-            }
+            float aspectRatio = static_cast< float >( m_Window->GetWidth () ) / static_cast< float >( m_Window->GetHeight () );
 
-        auto skeletalMeshPipeline = PipelineManager->GetSkeletalMeshPipeline ();
-        if (skeletalMeshPipeline)
-            {
-            skeletalMeshPipeline->SetViewMatrix ( viewMatrix );
-            skeletalMeshPipeline->SetProjectionMatrix ( projMatrix );
-            }
+            // Используем перспективную проекцию
+            m_ProjectionMatrix = Math::Matrix4::Perspective (
+                Math::ToRadians ( fov ),
+                aspectRatio,
+                0.1f,
+                100.0f
+            );
 
-        auto lightPipeline = PipelineManager->GetLightPipeline ();
-        if (lightPipeline)
-            {
-            lightPipeline->SetViewMatrix ( viewMatrix );
-            lightPipeline->SetProjectionMatrix ( projMatrix );
+            m_ViewMatrix = Math::Matrix4::LookAt (
+                position,
+                target,
+                Math::Vector3 ( 0.0f, 1.0f, 0.0f )
+            );
             }
-
-        CE_CORE_DEBUG ( "Shaders reloaded successfully" );
         }
 
     void CEVulkanRenderer::SetCameraViewMatrix ( const Math::Matrix4 & viewMatrix )
         {
-        ViewMatrix = viewMatrix;
+        m_ViewMatrix = viewMatrix;
         }
 
     void CEVulkanRenderer::SetCameraProjectionMatrix ( const Math::Matrix4 & projectionMatrix )
         {
-        ProjectionMatrix = projectionMatrix;
+        m_ProjectionMatrix = projectionMatrix;
+        }
+
+    void CEVulkanRenderer::RenderWorld ( CEWorld * world )
+        {
+        if (!world || !m_Initialized) return;
+
+        // Для совместимости - просто рендерим кадр
+        RenderFrame ();
+
+        // Логируем информацию о мире
+        auto actors = world->GetActors ();
+        int meshCount = 0;
+
+        for (auto * actor : actors)
+            {
+            if (actor)
+                {
+                    // Подсчитываем меш компоненты
+                    // auto meshComps = actor->GetComponentsOfType<CEMeshComponent>();
+                    // meshCount += static_cast<int>(meshComps.size());
+                meshCount++; // временная заглушка
+                }
+            }
+
+        CE_DEBUG ( "World has {} actors with {} mesh components", actors.size (), meshCount );
         }
 
     CEVulkanRenderer::CEVulkanRenderer ()
@@ -97,340 +84,218 @@ namespace CE
 
     bool CEVulkanRenderer::Initialize ( CEWindow * window )
         {
-        if (Initialized)
+        if (m_Initialized)
             {
             CE_CORE_WARN ( "VulkanRenderer already initialized" );
             return false;
             }
 
-        Window = window;
+        m_Window = window;
         CE_CORE_DEBUG ( "Initializing Vulkan renderer" );
 
         try
             {
-                // Initialize context
-            Context = std::make_unique<CEVulkanContext> ();
-            if (!Context->Initialize ( window ))
+                // 1. Initialize context
+            m_Context = std::make_unique<CEVulkanContext> ();
+            if (!m_Context->Initialize ( window ))
                 {
                 CE_CORE_ERROR ( "Failed to initialize Vulkan context" );
                 return false;
                 }
 
-                // Initialize swapchain
-            Swapchain = std::make_unique<CEVulkanSwapchain> ( Context.get () );
-            if (!Swapchain->Initialize ( window ))
+                // 2. Create resource managers
+            m_ShaderManager = std::make_unique<CEVulkanShaderManager> ( m_Context.get () );
+            m_ResourceManager = std::make_unique<CEVulkanResourceManager> ( m_Context.get () );
+
+            // 3. Create swapchain
+            m_Swapchain = std::make_unique<CEVulkanSwapchain> ();
+            if (!m_Swapchain->Initialize ( m_Context.get (), window ))
                 {
-                CE_CORE_ERROR ( "Failed to initialize Vulkan swapchain" );
+                CE_CORE_ERROR ( "Failed to initialize swapchain" );
                 return false;
                 }
 
-                // Initialize sync objects
-            SyncManager = std::make_unique<CEVulkanSync> ( Context.get () );
-            if (!SyncManager->Initialize ())
-                {
-                CE_CORE_ERROR ( "Failed to initialize Vulkan sync objects" );
-                return false;
-                }
-
-            PipelineManager = std::make_unique<CEVulkanPipelineManager> ( Context.get () );
-            CE_CORE_DEBUG ( "Creating pipeline manager..." );
-            if (!PipelineManager->Initialize ( Swapchain->GetRenderPass () ))
+                // 4. Create pipeline manager
+            m_PipelineManager = std::make_unique<CEVulkanPipelineManager> ( m_Context.get (), m_ShaderManager.get () );
+            if (!m_PipelineManager->Initialize ( m_Swapchain->GetRenderPass () ))
                 {
                 CE_CORE_ERROR ( "Failed to initialize pipeline manager" );
                 return false;
                 }
-            CE_CORE_DEBUG ( "Pipeline manager initialized" );
 
-                // Initialize command buffer
-            CommandBuffer = std::make_unique<CEVulkanCommandBuffer> ( Context.get () );
-            if (!CommandBuffer->Initialize ())
+                // 5. Create sync objects
+            m_SyncManager = std::make_unique<CEVulkanSync> ();
+            if (!m_SyncManager->Initialize ( m_Context.get (), m_Swapchain->GetMaxFramesInFlight () ))
                 {
-                CE_CORE_ERROR ( "Failed to initialize Vulkan command buffer" );
+                CE_CORE_ERROR ( "Failed to initialize sync objects" );
                 return false;
                 }
 
-                // Устанавливаем начальные матрицы камеры
+                // 6. Create command buffers
+            m_CommandBuffer = std::make_unique<CEVulkanCommandBuffer> ();
+            if (!m_CommandBuffer->Initialize ( m_Context.get (), m_Swapchain->GetMaxFramesInFlight () ))
+                {
+                CE_CORE_ERROR ( "Failed to initialize command buffers" );
+                return false;
+                }
+
+                // 7. Set default camera
             SetCameraParameters (
-               Math::Vector3 ( .0f, 0.0f, 2.0f ), // position
-               Math::Vector3 ( 0.0f, 0.0f, 0.0f ), // target
-                60.0f // fov
+                Math::Vector3 ( 0.0f, 0.0f, 2.0f ),
+                Math::Vector3 ( 0.0f, 0.0f, 0.0f ),
+                60.0f
             );
 
-            Initialized = true;
-            CE_CORE_DEBUG ( "Vulkan renderer initialized successfully" );
+            m_Initialized = true;
+            CE_CORE_INFO ( "Vulkan renderer initialized successfully" );
             return true;
             }
             catch (const std::exception & e)
                 {
-                CE_CORE_ERROR ( "Failed to initialize Vulkan renderer: {}", e.what () );
+                CE_CORE_ERROR ( "Exception during Vulkan renderer initialization: {}", e.what () );
+                Shutdown ();
                 return false;
                 }
         }
 
     void CEVulkanRenderer::Shutdown ()
         {
-        if (!Initialized) return;
+        if (!m_Initialized) return;
 
         CE_CORE_DEBUG ( "Shutting down Vulkan renderer" );
 
-        auto device = Context ? Context->GetDevice () : VK_NULL_HANDLE;
-        if (device != VK_NULL_HANDLE)
+        // Wait for device idle
+        if (m_Context)
             {
-            vkDeviceWaitIdle ( device );
+            vkDeviceWaitIdle ( m_Context->GetDevice () );
             }
 
-            // Cleanup in reverse order of initialization
-        if (CommandBuffer)
-            {
-            CommandBuffer->Shutdown ();
-            CommandBuffer.reset ();
-            }
+            // Cleanup in reverse order
+        m_CommandBuffer.reset ();
+        m_SyncManager.reset ();
+        m_PipelineManager.reset ();
+        m_Swapchain.reset ();
+        m_ResourceManager.reset ();
+        m_ShaderManager.reset ();
+        m_Context.reset ();
 
-        if (PipelineManager)
-            {
-            PipelineManager->Shutdown ();
-            PipelineManager.reset ();
-            }
-
-        if (SyncManager)
-            {
-            SyncManager->Shutdown ();
-            SyncManager.reset ();
-            }
-
-        if (Swapchain)
-            {
-            Swapchain->Shutdown ();
-            Swapchain.reset ();
-            }
-
-        if (Context)
-            {
-            Context->Shutdown ();
-            Context.reset ();
-            }
-
-        Initialized = false;
+        m_Initialized = false;
         CE_CORE_DEBUG ( "Vulkan renderer shutdown complete" );
         }
 
     void CEVulkanRenderer::RenderFrame ()
         {
-        if (!Initialized)
-            {
-            CE_CORE_WARN ( "Renderer not initialized" );
-            return;
-            }
-
-         // Диагностика матриц (можно убрать после отладки)
-        static int frameCount = 0;
-        if (frameCount % 60 == 0) // Каждые 60 кадров
-            {
-            DebugPrintMatrices ();
-            }
-        frameCount++;
+        if (!m_Initialized) return;
 
         try
             {
-                // 1. Ждем завершения предыдущего кадра
-            if (!SyncManager->WaitForFrameFence ())
+                // 1. Acquire next image
+            uint32_t imageIndex;
+            VkResult result = m_SyncManager->AcquireNextImage ( m_Swapchain.get (), &imageIndex );
+
+            if (result == VK_ERROR_OUT_OF_DATE_KHR)
                 {
-                CE_CORE_ERROR ( "Failed to wait for frame fence" );
+                RecreateSwapchain ();
+                return;
+                }
+            else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+                {
+                CE_CORE_ERROR ( "Failed to acquire swapchain image: {}", static_cast< int >( result ) );
                 return;
                 }
 
-                // 2. Сбрасываем fence для текущего кадра
-            if (!SyncManager->ResetFrameFence ())
+                // 2. Reset and begin command buffer
+            m_CommandBuffer->ResetCurrent ();
+            m_CommandBuffer->BeginRecording ();
+
+            // 3. Record commands
+            RecordCommandBuffer ( m_CommandBuffer->GetCurrent (), imageIndex );
+            m_CommandBuffer->EndRecording ();
+
+            // 4. Submit frame
+            if (m_SyncManager->SubmitFrame ( m_CommandBuffer.get (), m_Swapchain.get (), imageIndex ))
                 {
-                CE_CORE_ERROR ( "Failed to reset frame fence" );
-                return;
+                    // 5. Present
+                result = m_Swapchain->Present ( imageIndex, m_SyncManager->GetCurrentRenderFinishedSemaphore () );
+
+                if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+                    {
+                    RecreateSwapchain ();
+                    }
+                else if (result != VK_SUCCESS)
+                    {
+                    CE_CORE_ERROR ( "Failed to present swapchain image: {}", static_cast< int >( result ) );
+                    }
                 }
 
-                // 3. Получаем следующий image из swapchain
-            VkResult acquireResult = Swapchain->AcquireNextImage ( SyncManager->GetImageAvailableSemaphore () );
-
-            if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR)
-                {
-                CE_CORE_DEBUG ( "Swapchain out of date, recreating..." );
-                OnWindowResized ();
-                return;
-                }
-            else if (acquireResult != VK_SUCCESS && acquireResult != VK_SUBOPTIMAL_KHR)
-                {
-                CE_CORE_ERROR ( "Failed to acquire swapchain image: {}", static_cast< int >( acquireResult ) );
-                return;
-                }
-
-                // 4. Сбрасываем command buffer
-            CommandBuffer->Reset ();
-
-            if (!CommandBuffer->IsReadyForRecording ())
-                {
-                CE_CORE_ERROR ( "Command buffer is not ready for recording!" );
-                return;
-                }
-
-                // 5. Записываем command buffer
-            CommandBuffer->BeginRecording ();
-            RecordCommandBuffer ( CommandBuffer->GetCommandBuffer (), Swapchain->GetCurrentImageIndex () );
-            CommandBuffer->EndRecording ();
-
-            // 6. Отправляем command buffer
-            VkResult submitResult = Swapchain->SubmitCommandBuffer (
-                CommandBuffer->GetCommandBuffer (),
-                SyncManager->GetImageAvailableSemaphore (),
-                SyncManager->GetRenderFinishedSemaphore (),
-                SyncManager->GetInFlightFence ()
-            );
-
-            if (submitResult == VK_ERROR_OUT_OF_DATE_KHR || submitResult == VK_SUBOPTIMAL_KHR)
-                {
-                CE_CORE_DEBUG ( "Swapchain needs recreation after submit" );
-                OnWindowResized ();
-                }
-            else if (submitResult != VK_SUCCESS)
-                {
-                CE_CORE_ERROR ( "Failed to submit command buffer: {}", static_cast< int >( submitResult ) );
-                }
-
-                // 7. Переходим к следующему кадру
-            SyncManager->AdvanceFrame ();
+                // 6. Advance to next frame
+            m_SyncManager->AdvanceFrame ();
+            m_CommandBuffer->AdvanceFrame ();
             }
             catch (const std::exception & e)
                 {
-                CE_CORE_ERROR ( "Error during frame rendering: {}", e.what () );
+                CE_CORE_ERROR ( "Exception during frame rendering: {}", e.what () );
                 }
         }
 
     void CEVulkanRenderer::OnWindowResized ()
         {
-        if (!Initialized) return;
-
-        CE_CORE_DEBUG ( "Recreating swapchain due to window resize" );
-
-        // Ждем завершения операций устройства
-        vkDeviceWaitIdle ( Context->GetDevice () );
-
-        // Получаем новый размер окна
-        int width, height;
-        glfwGetFramebufferSize ( Window->GetNativeWindow (), &width, &height );
-
-        while (width == 0 || height == 0)
+        if (m_Initialized)
             {
-            glfwGetFramebufferSize ( Window->GetNativeWindow (), &width, &height );
-            glfwWaitEvents ();
-
-            // Если окно закрыто, выходим
-            if (glfwWindowShouldClose ( Window->GetNativeWindow () ))
-                return;
-            }
-
-            // Уничтожаем старый swapchain
-        Swapchain->Shutdown ();
-
-        // Пересоздаем
-        if (!Swapchain->Initialize ( Window ))
-            {
-            CE_CORE_ERROR ( "Failed to recreate swapchain!" );
-            return;
-            }
-
-            // Пересоздаем все пайплайны с новым render pass
-        PipelineManager->Shutdown ();
-        if (!PipelineManager->Initialize ( Swapchain->GetRenderPass () ))
-            {
-            CE_CORE_ERROR ( "Failed to recreate pipelines!" );
-            return;
-            }
-
-        CE_CORE_DEBUG ( "Swapchain and pipelines recreated successfully" );
-        }
-
-    void CEVulkanRenderer::RenderWorldMeshes ( VkCommandBuffer commandBuffer )
-        {
-        if (m_WorldRenderer)
-            {
-            m_WorldRenderer->Render ( commandBuffer );
-            }
-        else
-            {
-            CE_DEBUG ( "No world renderer available, using fallback triangle" );
-           // RenderFallbackTriangle ( commandBuffer );
+            CE_CORE_DEBUG ( "Window resized, recreating swapchain" );
+            RecreateSwapchain ();
             }
         }
 
-    void CEVulkanRenderer::RenderWorld ( CEWorld * world )
+    void CEVulkanRenderer::ReloadShaders ()
         {
-        if (!world || !Initialized) return;
-
-        // Сохраняем ссылку на мир
-        m_CurrentWorld = world;
-
-        // Создаем world renderer если нужно
-        if (!m_WorldRenderer)
+        if (m_ShaderManager && m_PipelineManager)
             {
-            m_WorldRenderer = std::make_unique<CEWorldRenderer> ( this );
+            CE_CORE_DEBUG ( "Reloading all shaders..." );
+            m_ShaderManager->ReloadAllShaders ();
+            m_PipelineManager->ReloadAllPipelines ();
+            CE_CORE_DEBUG ( "Shaders reloaded successfully" );
             }
-        m_WorldRenderer->SetWorld ( world );
+        }
 
-        // Основной рендеринг кадра
-        RenderFrame ();
-
-        // Отладочная информация
-        auto actors = world->GetActors ();
-        int meshCount = 0;
-
-        for (auto * actor : actors)
+    bool CEVulkanRenderer::IsMatrixInitialized ( const Math::Matrix4 & matrix )
+        {
+         // Проверяем что матрица не нулевая (простая проверка)
+        for (int i = 0; i < 4; ++i)
             {
-            if (actor)
+            for (int j = 0; j < 4; ++j)
                 {
-                auto meshComps = actor->GetComponentsOfType<CEMeshComponent> ();
-                meshCount += static_cast< int >( meshComps.size () );  // Явное приведение типа
+                if (matrix.At ( i, j ) != 0.0f)
+                    return true;
                 }
             }
-
-        CE_DEBUG ( "World has {} actors with {} mesh components", actors.size (), meshCount );
+        return false;
         }
 
     void CEVulkanRenderer::RecordCommandBuffer ( VkCommandBuffer commandBuffer, uint32_t imageIndex )
         {
-            // Проверяем критически важные указатели
-        if (!Swapchain || !PipelineManager || !SyncManager)
-            {
-            CE_CORE_ERROR ( "Critical components not initialized in RecordCommandBuffer" );
-            return;
-            }
+        VkCommandBufferBeginInfo beginInfo {};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = 0;
 
-        VkRenderPass renderPass = Swapchain->GetRenderPass ();
-        if (renderPass == VK_NULL_HANDLE)
+        if (vkBeginCommandBuffer ( commandBuffer, &beginInfo ) != VK_SUCCESS)
             {
-            CE_CORE_ERROR ( "Render pass is null in RecordCommandBuffer" );
-            return;
+            throw std::runtime_error ( "Failed to begin recording command buffer" );
             }
 
             // Begin render pass
         VkRenderPassBeginInfo renderPassInfo {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = renderPass;
-
-        // Получаем framebuffers по ссылке, а не копированием - ИСПРАВЛЕНО
-        const auto & framebuffers = Swapchain->GetFramebuffers (); // Добавлен const&
-        if (imageIndex >= framebuffers.Size ())
-            {
-            CE_CORE_ERROR ( "Invalid image index: {} (max: {})", imageIndex, framebuffers.Size () );
-            return;
-            }
-        renderPassInfo.framebuffer = framebuffers[ imageIndex ];
-
+        renderPassInfo.renderPass = m_Swapchain->GetRenderPass ();
+        renderPassInfo.framebuffer = m_Swapchain->GetFramebuffer ( imageIndex );
         renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = Swapchain->GetExtent ();
+        renderPassInfo.renderArea.extent = m_Swapchain->GetExtent ();
 
-        VkClearValue clearValues[ 2 ];
-        clearValues[ 0 ].color = { {.20f, .20f, .2f, 1.0f} };
+        std::array<VkClearValue, 2> clearValues {};
+        clearValues[ 0 ].color = { {0.2f, 0.2f, 0.2f, 1.0f} };
         clearValues[ 1 ].depthStencil = { 1.0f, 0 };
-
-        renderPassInfo.clearValueCount = 2;
-        renderPassInfo.pClearValues = clearValues;
+        renderPassInfo.clearValueCount = static_cast< uint32_t >( clearValues.size () );
+        renderPassInfo.pClearValues = clearValues.data ();
 
         vkCmdBeginRenderPass ( commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
@@ -438,60 +303,65 @@ namespace CE
         VkViewport viewport {};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = static_cast< float >( Swapchain->GetExtent ().width );
-        viewport.height = static_cast< float >( Swapchain->GetExtent ().height );
+        viewport.width = static_cast< float >( m_Swapchain->GetExtent ().width );
+        viewport.height = static_cast< float >( m_Swapchain->GetExtent ().height );
         viewport.minDepth = 0.0f;
-        viewport.maxDepth = 5.0f;
+        viewport.maxDepth = 1.0f;
         vkCmdSetViewport ( commandBuffer, 0, 1, &viewport );
 
         VkRect2D scissor {};
         scissor.offset = { 0, 0 };
-        scissor.extent = Swapchain->GetExtent ();
+        scissor.extent = m_Swapchain->GetExtent ();
         vkCmdSetScissor ( commandBuffer, 0, 1, &scissor );
 
-        
+        // Render fallback triangle
+        RenderFallbackTriangle ( commandBuffer );
 
-        
-
-        // Рендерим мир с мешами вместо fallback треугольника
-        RenderWorldMeshes ( commandBuffer );
-        // End render pass
         vkCmdEndRenderPass ( commandBuffer );
+
+        if (vkEndCommandBuffer ( commandBuffer ) != VK_SUCCESS)
+            {
+            throw std::runtime_error ( "Failed to record command buffer" );
+            }
         }
 
     void CEVulkanRenderer::RenderFallbackTriangle ( VkCommandBuffer commandBuffer )
         {
-        if (!PipelineManager)
+        auto pipeline = m_PipelineManager->GetDefaultPipeline ();
+        if (!pipeline)
             {
-            CE_CORE_ERROR ( "PipelineManager is null in RenderFallbackTriangle" );
+            CE_CORE_WARN ( "No default pipeline available for fallback rendering" );
             return;
             }
 
-        auto staticMeshPipeline = PipelineManager->GetStaticMeshPipeline ();
-        if (!staticMeshPipeline)
-            {
-            CE_CORE_ERROR ( "StaticMeshPipeline is null in RenderFallbackTriangle" );
-            return;
-            }
-
-        if (staticMeshPipeline->GetPipeline () == VK_NULL_HANDLE)
-            {
-            CE_CORE_ERROR ( "StaticMeshPipeline VkPipeline is null in RenderFallbackTriangle" );
-            return;
-            }
-
-        CE_CORE_DEBUG ( "Binding static mesh pipeline for fallback triangle" );
-        CE_CORE_DEBUG ( "StaticMeshPipeline valid: {}",
-                        ( staticMeshPipeline->GetPipeline () != VK_NULL_HANDLE ) );
-
-           // Добавьте проверку pipeline layout
-        if (staticMeshPipeline->GetLayout () == VK_NULL_HANDLE)
-            {
-            CE_CORE_ERROR ( "Pipeline layout is null!" );
-            return;
-            }
-
-        staticMeshPipeline->Bind ( commandBuffer );
+        pipeline->Bind ( commandBuffer );
         vkCmdDraw ( commandBuffer, 3, 1, 0, 0 );
+        }
+
+    void CEVulkanRenderer::RecreateSwapchain ()
+        {
+        vkDeviceWaitIdle ( m_Context->GetDevice () );
+
+        // Store old swapchain
+        auto oldSwapchain = std::move ( m_Swapchain );
+
+        // Create new swapchain
+        m_Swapchain = std::make_unique<CEVulkanSwapchain> ();
+        if (!m_Swapchain->Initialize ( m_Context.get (), m_Window, oldSwapchain.get () ))
+            {
+            CE_CORE_ERROR ( "Failed to recreate swapchain" );
+            return;
+            }
+
+            // Recreate pipelines if render pass changed
+        if (m_PipelineManager && oldSwapchain)
+            {
+            if (m_Swapchain->GetRenderPass () != oldSwapchain->GetRenderPass ())
+                {
+                m_PipelineManager->RecreatePipelines ( m_Swapchain->GetRenderPass () );
+                }
+            }
+
+        CE_CORE_DEBUG ( "Swapchain recreated successfully" );
         }
     }

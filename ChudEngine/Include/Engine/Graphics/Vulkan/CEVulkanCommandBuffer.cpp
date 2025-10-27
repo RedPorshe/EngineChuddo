@@ -1,13 +1,13 @@
+// Runtime/Renderer/Vulkan/CEVulkanCommandBuffer.cpp
 #include "CEVulkanCommandBuffer.hpp"
 #include "Core/Logger.h"
 #include <stdexcept>
 
 namespace CE
     {
-    CEVulkanCommandBuffer::CEVulkanCommandBuffer ( CEVulkanContext * context )
-        : Context ( context )
+    CEVulkanCommandBuffer::CEVulkanCommandBuffer ()
         {
-        CE_CORE_DEBUG ( "Vulkan command buffer created" );
+        CE_CORE_DEBUG ( "Vulkan command buffer manager created" );
         }
 
     CEVulkanCommandBuffer::~CEVulkanCommandBuffer ()
@@ -15,179 +15,121 @@ namespace CE
         Shutdown ();
         }
 
-    bool CEVulkanCommandBuffer::Initialize ()
+    bool CEVulkanCommandBuffer::Initialize ( CEVulkanContext * context, uint32_t maxFramesInFlight )
         {
+        m_Context = context;
+
         try
             {
             CreateCommandPool ();
-            CreateCommandBuffer ();
+            CreateCommandBuffers ();
 
-            // Проверяем, что command buffer создан правильно
-            if (CommandBuffer == VK_NULL_HANDLE)
+            // Ensure all command buffers are created properly
+            for (auto cmdBuffer : m_CommandBuffers)
                 {
-                throw std::runtime_error ( "Command buffer is null after creation!" );
+                if (cmdBuffer == VK_NULL_HANDLE)
+                    {
+                    throw std::runtime_error ( "Command buffer creation failed!" );
+                    }
                 }
 
-            CE_CORE_DEBUG ( "Vulkan command buffer initialized successfully (handle: {})", ( void * ) CommandBuffer );
+            CE_CORE_DEBUG ( "Vulkan command buffers initialized successfully ({} buffers)", maxFramesInFlight );
             return true;
             }
             catch (const std::exception & e)
                 {
-                CE_CORE_ERROR ( "Failed to initialize Vulkan command buffer: {}", e.what () );
+                CE_CORE_ERROR ( "Failed to initialize Vulkan command buffers: {}", e.what () );
                 return false;
                 }
         }
 
     void CEVulkanCommandBuffer::Shutdown ()
         {
-        auto device = Context ? Context->GetDevice () : VK_NULL_HANDLE;
+        auto device = m_Context ? m_Context->GetDevice () : VK_NULL_HANDLE;
+        if (!device) return;
 
-        if (device == VK_NULL_HANDLE)
+        if (m_CommandPool != VK_NULL_HANDLE)
             {
-            CE_CORE_DEBUG ( "No valid device for command buffer shutdown" );
-            return;
+            vkDestroyCommandPool ( device, m_CommandPool, nullptr );
+            m_CommandPool = VK_NULL_HANDLE;
             }
 
-        if (CommandBuffer != VK_NULL_HANDLE)
-            {
-                // Command buffers are freed when pool is destroyed
-            CommandBuffer = VK_NULL_HANDLE;
-            }
-
-        if (CommandPool != VK_NULL_HANDLE)
-            {
-            vkDestroyCommandPool ( device, CommandPool, nullptr );
-            CommandPool = VK_NULL_HANDLE;
-            }
-
-        CE_CORE_DEBUG ( "Vulkan command buffer shutdown complete" );
+        m_CommandBuffers.Clear ();
+        CE_CORE_DEBUG ( "Vulkan command buffer manager shutdown complete" );
         }
 
     void CEVulkanCommandBuffer::CreateCommandPool ()
         {
-        auto device = Context->GetDevice ();
-        auto queueIndices = Context->GetQueueFamilyIndices ();
+        auto device = m_Context->GetDevice ();
+        auto queueIndices = m_Context->GetQueueFamilyIndices ();
 
         VkCommandPoolCreateInfo poolInfo {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         poolInfo.queueFamilyIndex = queueIndices.graphicsFamily.value ();
 
-        VkResult result = vkCreateCommandPool ( device, &poolInfo, nullptr, &CommandPool );
-        if (result != VK_SUCCESS)
+        if (vkCreateCommandPool ( device, &poolInfo, nullptr, &m_CommandPool ) != VK_SUCCESS)
             {
-            CE_CORE_ERROR ( "Failed to create command pool: {}", static_cast< int >( result ) );
             throw std::runtime_error ( "Failed to create command pool!" );
             }
 
         CE_CORE_DEBUG ( "Command pool created" );
         }
 
-    void CEVulkanCommandBuffer::CreateCommandBuffer ()
+    void CEVulkanCommandBuffer::CreateCommandBuffers ()
         {
-        auto device = Context->GetDevice ();
+        auto device = m_Context->GetDevice ();
+
+        // Create one command buffer per frame in flight
+        m_CommandBuffers.Resize ( 2 ); // Standard double buffering
 
         VkCommandBufferAllocateInfo allocInfo {};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = CommandPool;
+        allocInfo.commandPool = m_CommandPool;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandBufferCount = 1;
+        allocInfo.commandBufferCount = static_cast< uint32_t >( m_CommandBuffers.Size () );
 
-        VkResult result = vkAllocateCommandBuffers ( device, &allocInfo, &CommandBuffer );
-        if (result != VK_SUCCESS)
+        if (vkAllocateCommandBuffers ( device, &allocInfo, m_CommandBuffers.RawData () ) != VK_SUCCESS)
             {
-            CE_CORE_ERROR ( "Failed to allocate command buffers: {}", static_cast< int >( result ) );
             throw std::runtime_error ( "Failed to allocate command buffers!" );
             }
 
-        CE_CORE_DEBUG ( "Command buffer allocated" );
+        CE_CORE_DEBUG ( "Command buffers allocated" );
+        }
+
+    void CEVulkanCommandBuffer::ResetCurrent ()
+        {
+        if (m_CommandBuffers[ m_CurrentFrame ] != VK_NULL_HANDLE)
+            {
+            vkResetCommandBuffer ( m_CommandBuffers[ m_CurrentFrame ], 0 );
+            }
         }
 
     void CEVulkanCommandBuffer::BeginRecording ()
         {
-        if (CommandBuffer == VK_NULL_HANDLE)
-            {
-            throw std::runtime_error ( "Command buffer is null!" );
-            }
-
-            
-        ValidateRecordingState ();
-
         VkCommandBufferBeginInfo beginInfo {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         beginInfo.pInheritanceInfo = nullptr;
 
-        VkResult result = vkBeginCommandBuffer ( CommandBuffer, &beginInfo );
-        if (result != VK_SUCCESS)
+        if (vkBeginCommandBuffer ( m_CommandBuffers[ m_CurrentFrame ], &beginInfo ) != VK_SUCCESS)
             {
-            CE_CORE_ERROR ( "Failed to begin recording command buffer: {}", static_cast< int >( result ) );
             throw std::runtime_error ( "Failed to begin recording command buffer!" );
             }
-
-        
-        }
-
-   
-
-    void CEVulkanCommandBuffer::ValidateRecordingState () const
-        {
-        if (CommandBuffer == VK_NULL_HANDLE)
-            {
-            throw std::runtime_error ( "Command buffer is null during validation!" );
-            }
-
-        if (CommandPool == VK_NULL_HANDLE)
-            {
-            throw std::runtime_error ( "Command pool is null during validation!" );
-            }        
         }
 
     void CEVulkanCommandBuffer::EndRecording ()
         {
-        if (CommandBuffer == VK_NULL_HANDLE)
+        if (vkEndCommandBuffer ( m_CommandBuffers[ m_CurrentFrame ] ) != VK_SUCCESS)
             {
-            throw std::runtime_error ( "Command buffer is null!" );
-            }
-
-        VkResult result = vkEndCommandBuffer ( CommandBuffer );
-        if (result != VK_SUCCESS)
-            {
-            CE_CORE_ERROR ( "Failed to end recording command buffer: {}", static_cast< int >( result ) );
             throw std::runtime_error ( "Failed to record command buffer!" );
-            }       
-        }
-
-    void CEVulkanCommandBuffer::Reset ()
-        {
-        if (CommandBuffer == VK_NULL_HANDLE)
-            {
-            return;
             }
-
-        VkResult result = vkResetCommandBuffer ( CommandBuffer, 0 );
-        if (result != VK_SUCCESS)
-            {
-            CE_CORE_WARN ( "Failed to reset command buffer: {}, but continuing...", static_cast< int >( result ) );
-            // Не бросаем исключение здесь, так как это может быть нормальной ситуацией
-            }       
         }
 
     bool CEVulkanCommandBuffer::IsReadyForRecording () const
         {
-        if (CommandBuffer == VK_NULL_HANDLE)
-            {
-            CE_CORE_ERROR ( "Command buffer is null" );
-            return false;
-            }
-
-        if (CommandPool == VK_NULL_HANDLE)
-            {
-            CE_CORE_ERROR ( "Command pool is null" );
-            return false;
-            }
-
-            // Дополнительные проверки можно добавить здесь
-        return true;
+        return m_CommandPool != VK_NULL_HANDLE &&
+            m_CurrentFrame < m_CommandBuffers.Size () &&
+            m_CommandBuffers[ m_CurrentFrame ] != VK_NULL_HANDLE;
         }
     }

@@ -9,23 +9,33 @@ namespace CE
     class CEVulkanCommandBuffer
         {
         public:
-            CEVulkanCommandBuffer ( CEVulkanContext * context );
+            CEVulkanCommandBuffer ();
             ~CEVulkanCommandBuffer ();
 
-            bool Initialize ();
+            bool Initialize ( CEVulkanContext * context, uint32_t maxFramesInFlight );
             void Shutdown ();
 
-            VkCommandBuffer GetCommandBuffer () const { return CommandBuffer; }
+            // Command buffer operations
+            VkCommandBuffer GetCurrent () const {
+                return m_CommandBuffers[ m_CurrentFrame ];
+                }
+            void ResetCurrent ();
             void BeginRecording ();
             void EndRecording ();
-            void Reset ();
+
+            void AdvanceFrame () {
+                m_CurrentFrame = ( m_CurrentFrame + 1 ) % m_CommandBuffers.Size ();
+                }
+
             bool IsReadyForRecording () const;
-            void ValidateRecordingState () const;
+
         private:
             void CreateCommandPool ();
-            void CreateCommandBuffer ();
-            CEVulkanContext * Context = nullptr;
-            VkCommandPool CommandPool = VK_NULL_HANDLE;
-            VkCommandBuffer CommandBuffer = VK_NULL_HANDLE;
+            void CreateCommandBuffers ();
+
+            CEVulkanContext * m_Context = nullptr;
+            VkCommandPool m_CommandPool = VK_NULL_HANDLE;
+            CEArray<VkCommandBuffer> m_CommandBuffers;
+            uint32_t m_CurrentFrame = 0;
         };
     }

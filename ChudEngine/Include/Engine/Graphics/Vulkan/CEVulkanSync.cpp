@@ -1,12 +1,15 @@
+// Runtime/Renderer/Vulkan/CEVulkanSync.cpp
 #include "CEVulkanSync.hpp"
 #include "CEVulkanContext.hpp"
+#include "CEVulkanSwapchain.hpp"
+#include "CEVulkanCommandBuffer.hpp"
 #include "Core/Logger.h"
 #include <stdexcept>
 
+
 namespace CE
     {
-    CEVulkanSync::CEVulkanSync ( CEVulkanContext * context )
-        : Context ( context )
+    CEVulkanSync::CEVulkanSync ()
         {
         CE_CORE_DEBUG ( "Vulkan sync manager created" );
         }
@@ -16,12 +19,15 @@ namespace CE
         Shutdown ();
         }
 
-    bool CEVulkanSync::Initialize ()
+    bool CEVulkanSync::Initialize ( CEVulkanContext * context, uint32_t maxFramesInFlight )
         {
+        m_Context = context;
+        m_MaxFramesInFlight = maxFramesInFlight;
+
         try
             {
             CreateSyncObjects ();
-            CE_CORE_DEBUG ( "Vulkan sync manager initialized successfully" );
+            CE_CORE_DEBUG ( "Vulkan sync manager initialized successfully for {} frames", maxFramesInFlight );
             return true;
             }
             catch (const std::exception & e)
@@ -33,169 +39,108 @@ namespace CE
 
     void CEVulkanSync::Shutdown ()
         {
-        auto device = Context ? Context->GetDevice () : VK_NULL_HANDLE;
+        auto device = m_Context ? m_Context->GetDevice () : VK_NULL_HANDLE;
+        if (!device) return;
 
-        if (device == VK_NULL_HANDLE)
+        for (size_t i = 0; i < m_InFlightFences.Size (); i++)
             {
-            CE_CORE_DEBUG ( "No valid device for sync manager shutdown" );
-            return;
-            }
-
-        for (size_t i = 0; i < ImageAvailableSemaphores.Size () && i < MAX_FRAMES_IN_FLIGHT; i++)
-            {
-            if (RenderFinishedSemaphores[ i ] != VK_NULL_HANDLE)
+            if (m_RenderFinishedSemaphores[ i ] != VK_NULL_HANDLE)
                 {
-                vkDestroySemaphore ( device, RenderFinishedSemaphores[ i ], nullptr );
-                RenderFinishedSemaphores[ i ] = VK_NULL_HANDLE;
+                vkDestroySemaphore ( device, m_RenderFinishedSemaphores[ i ], nullptr );
                 }
-
-            if (ImageAvailableSemaphores[ i ] != VK_NULL_HANDLE)
+            if (m_ImageAvailableSemaphores[ i ] != VK_NULL_HANDLE)
                 {
-                vkDestroySemaphore ( device, ImageAvailableSemaphores[ i ], nullptr );
-                ImageAvailableSemaphores[ i ] = VK_NULL_HANDLE;
+                vkDestroySemaphore ( device, m_ImageAvailableSemaphores[ i ], nullptr );
                 }
-
-            if (InFlightFences[ i ] != VK_NULL_HANDLE)
+            if (m_InFlightFences[ i ] != VK_NULL_HANDLE)
                 {
-                vkDestroyFence ( device, InFlightFences[ i ], nullptr );
-                InFlightFences[ i ] = VK_NULL_HANDLE;
+                vkDestroyFence ( device, m_InFlightFences[ i ], nullptr );
                 }
             }
 
-        ImageAvailableSemaphores.Clear ();
-        RenderFinishedSemaphores.Clear ();
-        InFlightFences.Clear ();
+        m_ImageAvailableSemaphores.Clear ();
+        m_RenderFinishedSemaphores.Clear ();
+        m_InFlightFences.Clear ();
 
         CE_CORE_DEBUG ( "Vulkan sync manager shutdown complete" );
         }
 
     void CEVulkanSync::CreateSyncObjects ()
         {
-        auto device = Context->GetDevice ();
+        auto device = m_Context->GetDevice ();
 
-        ImageAvailableSemaphores.Resize ( MAX_FRAMES_IN_FLIGHT );
-        RenderFinishedSemaphores.Resize ( MAX_FRAMES_IN_FLIGHT );
-        InFlightFences.Resize ( MAX_FRAMES_IN_FLIGHT );
+        m_ImageAvailableSemaphores.Resize ( m_MaxFramesInFlight );
+        m_RenderFinishedSemaphores.Resize ( m_MaxFramesInFlight );
+        m_InFlightFences.Resize ( m_MaxFramesInFlight );
 
         VkSemaphoreCreateInfo semaphoreInfo {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
         VkFenceCreateInfo fenceInfo {};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT; // Важно: создаем в signaled состоянии
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        for (size_t i = 0; i < m_MaxFramesInFlight; i++)
             {
-            VkResult semaphoreResult1 = vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &ImageAvailableSemaphores[ i ] );
-            VkResult semaphoreResult2 = vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &RenderFinishedSemaphores[ i ] );
-            VkResult fenceResult = vkCreateFence ( device, &fenceInfo, nullptr, &InFlightFences[ i ] );
-
-            if (semaphoreResult1 != VK_SUCCESS || semaphoreResult2 != VK_SUCCESS || fenceResult != VK_SUCCESS)
+            if (vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[ i ] ) != VK_SUCCESS ||
+                 vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[ i ] ) != VK_SUCCESS ||
+                 vkCreateFence ( device, &fenceInfo, nullptr, &m_InFlightFences[ i ] ) != VK_SUCCESS)
                 {
-                CE_CORE_ERROR ( "Failed to create sync objects for frame {}: sem1={}, sem2={}, fence={}",
-                                i, static_cast< int > ( semaphoreResult1 ), static_cast< int > ( semaphoreResult2 ), static_cast< int > ( fenceResult ) );
                 throw std::runtime_error ( "Failed to create synchronization objects for a frame!" );
                 }
-
             }
 
-        CE_CORE_DEBUG ( "Sync objects created for {} frames in flight", MAX_FRAMES_IN_FLIGHT );
+        CE_CORE_DEBUG ( "Sync objects created for {} frames in flight", m_MaxFramesInFlight );
         }
 
-    bool CEVulkanSync::WaitForFrameFence ()
+    VkResult CEVulkanSync::AcquireNextImage ( CEVulkanSwapchain * swapchain, uint32_t * imageIndex )
         {
-        auto device = Context->GetDevice ();
+        auto device = m_Context->GetDevice ();
 
-        if (CurrentFrame >= InFlightFences.Size ())
+        // Wait for the frame to be finished
+        vkWaitForFences ( device, 1, &m_InFlightFences[ m_CurrentFrame ], VK_TRUE, UINT64_MAX );
+
+        // Acquire the next image
+        return swapchain->AcquireNextImage ( m_ImageAvailableSemaphores[ m_CurrentFrame ], imageIndex );
+        }
+
+    bool CEVulkanSync::SubmitFrame ( CEVulkanCommandBuffer * commandBuffer, CEVulkanSwapchain * swapchain, uint32_t imageIndex )
+        {
+        auto device = m_Context->GetDevice ();
+        auto graphicsQueue = m_Context->GetGraphicsQueue ();
+
+        // Reset fence before submitting
+        vkResetFences ( device, 1, &m_InFlightFences[ m_CurrentFrame ] );
+
+        // Submit command buffer
+        VkSubmitInfo submitInfo {};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+        VkSemaphore waitSemaphores [] = { m_ImageAvailableSemaphores[ m_CurrentFrame ] };
+        VkPipelineStageFlags waitStages [] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages;
+
+        VkCommandBuffer cmdBuffer = commandBuffer->GetCurrent ();
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &cmdBuffer;
+
+        VkSemaphore signalSemaphores [] = { m_RenderFinishedSemaphores[ m_CurrentFrame ] };
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+
+        if (vkQueueSubmit ( graphicsQueue, 1, &submitInfo, m_InFlightFences[ m_CurrentFrame ] ) != VK_SUCCESS)
             {
-            CE_CORE_ERROR ( "Current frame index out of bounds: {} >= {}", CurrentFrame, InFlightFences.Size () );
+            CE_CORE_ERROR ( "Failed to submit draw command buffer" );
             return false;
             }
 
-        // Ждем завершения предыдущего кадра для этого индекса
-        VkResult waitResult = vkWaitForFences ( device, 1, &InFlightFences[ CurrentFrame ], VK_TRUE, UINT64_MAX );
-        if (waitResult != VK_SUCCESS)
-            {
-            CE_CORE_ERROR ( "Failed to wait for fence: {}", static_cast< int >( waitResult ) );
-            return false;
-            }
-
-      
         return true;
-        }
-
-    bool CEVulkanSync::ResetFrameFence ()
-        {
-        auto device = Context->GetDevice ();
-
-        if (CurrentFrame >= InFlightFences.Size ())
-            {
-            CE_CORE_ERROR ( "Current frame index out of bounds: {} >= {}", CurrentFrame, InFlightFences.Size () );
-            return false;
-            }
-
-        // Сбрасываем fence для нового кадра
-        VkResult resetResult = vkResetFences ( device, 1, &InFlightFences[ CurrentFrame ] );
-        if (resetResult != VK_SUCCESS)
-            {
-            CE_CORE_ERROR ( "Failed to reset fence: {}", static_cast< int >( resetResult ) );
-            return false;
-            }
-
-       
-        return true;
-        }
-
-    bool CEVulkanSync::IsFrameFenceSignaled ()
-        {
-        auto device = Context->GetDevice ();
-
-        if (CurrentFrame >= InFlightFences.Size ())
-            {
-            return false;
-            }
-
-        VkResult result = vkGetFenceStatus ( device, InFlightFences[ CurrentFrame ] );
-        return result == VK_SUCCESS;
-        }
-
-    // Устаревший метод - для обратной совместимости
-    void CEVulkanSync::WaitForFrame ()
-        {
-        auto device = Context->GetDevice ();
-
-        if (CurrentFrame >= InFlightFences.Size ())
-            {
-            throw std::runtime_error ( "Current frame index out of bounds!" );
-            }
-
-        // Ждем завершения предыдущего кадра для этого индекса
-        VkResult waitResult = vkWaitForFences ( device, 1, &InFlightFences[ CurrentFrame ], VK_TRUE, UINT64_MAX );
-        if (waitResult != VK_SUCCESS)
-            {
-            CE_CORE_ERROR ( "Failed to wait for fence: {}", static_cast< int >( waitResult ) );
-            throw std::runtime_error ( "Failed to wait for fence!" );
-            }
-
-        // Сбрасываем fence ДО начала нового кадра
-        VkResult resetResult = vkResetFences ( device, 1, &InFlightFences[ CurrentFrame ] );
-        if (resetResult != VK_SUCCESS)
-            {
-            CE_CORE_ERROR ( "Failed to reset fence: {}", static_cast< int >( resetResult ) );
-            throw std::runtime_error ( "Failed to reset fence!" );
-            }
-        }
-
-    void CEVulkanSync::SubmitFrame ()
-        {
-        // Этот метод может быть использован для дополнительной логики при завершении кадра
-        // В текущей реализации просто логируем
-       
         }
 
     void CEVulkanSync::AdvanceFrame ()
         {
-        uint32_t previousFrame = CurrentFrame;
-        CurrentFrame = ( CurrentFrame + 1 ) % MAX_FRAMES_IN_FLIGHT;       
+        m_CurrentFrame = ( m_CurrentFrame + 1 ) % m_MaxFramesInFlight;
         }
     }

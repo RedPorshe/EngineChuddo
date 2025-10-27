@@ -4,25 +4,15 @@
 
 namespace CE
     {
-    CESkeletalMeshPipeline::CESkeletalMeshPipeline ( CEVulkanContext * context )
-        : CEVulkanBasePipeline ( context,
-                                 PipelineConfig {
-                                     "SkeletalMesh",
-                                     VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                                     VK_POLYGON_MODE_FILL,
-                                     VK_CULL_MODE_BACK_BIT,
-                                     VK_FRONT_FACE_COUNTER_CLOCKWISE,
-                                     true,  // depth test
-                                     true,  // depth write
-                                     false  // blend enable
-                                 } )
+    CESkeletalMeshPipeline::CESkeletalMeshPipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager )
+        : CEVulkanBasePipeline ( context, shaderManager, PipelineConfig { "SkeletalMeshPipeline" } )
         {
+         // Устанавливаем специфичные для SkeletalMeshPipeline шейдеры
+      //  SetVertexShader ( "Resources/Shaders/Vulkan/skeletal.vert" );
+     //   SetFragmentShader ( "Resources/Shaders/Vulkan/skeletal.frag" );
         }
 
-    bool CESkeletalMeshPipeline::Initialize ( VkRenderPass renderPass )
-        {
-        return CEVulkanBasePipeline::Initialize ( renderPass );
-        }
+  
 
     bool CESkeletalMeshPipeline::CreateDescriptorSetLayout ()
         {

@@ -7,9 +7,10 @@ namespace CE
     class CEPostProcessPipeline : public CEVulkanBasePipeline
         {
         public:
-            CEPostProcessPipeline ( CEVulkanContext * context );
+            CEPostProcessPipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager );
+            ~CEPostProcessPipeline () = default;
 
-            bool Initialize ( VkRenderPass renderPass ) override;
+          
 
             // Post-processing specific methods
             void SetInputTexture ( VkImageView textureView, VkSampler sampler );

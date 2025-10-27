@@ -1,13 +1,14 @@
+// Runtime/Renderer/Vulkan/CEVulkanSwapchain.cpp
 #include "CEVulkanSwapchain.hpp"
 #include "Platform/Window/CEWindow.hpp"
 #include "Core/Logger.h"
-#include <stdexcept>
 #include <algorithm>
+#include <stdexcept>
+#include <array>
 
 namespace CE
     {
-    CEVulkanSwapchain::CEVulkanSwapchain ( CEVulkanContext * context )
-        : Context ( context )
+    CEVulkanSwapchain::CEVulkanSwapchain ()
         {
         CE_CORE_DEBUG ( "Vulkan swapchain created" );
         }
@@ -17,69 +18,20 @@ namespace CE
         Shutdown ();
         }
 
-    bool CEVulkanSwapchain::CreateUIRenderPass ()
+    bool CEVulkanSwapchain::Initialize ( CEVulkanContext * context, CEWindow * window, CEVulkanSwapchain * oldSwapchain )
         {
-        auto device = Context->GetDevice ();
+        m_Context = context;
 
-        // UI обычно требует blending
-        VkAttachmentDescription colorAttachment {};
-        colorAttachment.format = ImageFormat;
-        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // UI поверх существующего содержимого
-        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-        VkAttachmentReference colorAttachmentRef {};
-        colorAttachmentRef.attachment = 0;
-        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-        VkSubpassDescription subpass {};
-        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &colorAttachmentRef;
-
-        VkSubpassDependency dependency {};
-        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubpass = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.srcAccessMask = 0;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-        VkRenderPassCreateInfo renderPassInfo {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = 1;
-        renderPassInfo.pAttachments = &colorAttachment;
-        renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses = &subpass;
-        renderPassInfo.dependencyCount = 1;
-        renderPassInfo.pDependencies = &dependency;
-
-        if (vkCreateRenderPass ( device, &renderPassInfo, nullptr, &UIRenderPass ) != VK_SUCCESS)
-            {
-            CE_CORE_ERROR ( "Failed to create UI render pass!" );
-            return false;
-            }
-
-        CE_CORE_DEBUG ( "UI render pass created successfully" );
-        return true;
-        }
-
-
-    bool CEVulkanSwapchain::Initialize ( CEWindow * window )
-        {
         try
             {
-            CreateSwapchain ( window );
+            VkSwapchainKHR oldSwapchainHandle = oldSwapchain ? oldSwapchain->GetSwapchain () : VK_NULL_HANDLE;
+            CreateSwapchain ( window, oldSwapchainHandle );
             CreateImageViews ();
             CreateRenderPass ();
             CreateDepthResources ();
             CreateFramebuffers ();
 
-            CE_CORE_DEBUG ( "Vulkan swapchain initialized successfully" );
+            CE_CORE_DEBUG ( "Vulkan swapchain initialized successfully with {} images", m_Images.Size () );
             return true;
             }
             catch (const std::exception & e)
@@ -95,20 +47,11 @@ namespace CE
         CE_CORE_DEBUG ( "Vulkan swapchain shutdown complete" );
         }
 
-    void CEVulkanSwapchain::Recreate ( CEWindow * window )
+    void CEVulkanSwapchain::CreateSwapchain ( CEWindow * window, VkSwapchainKHR oldSwapchain )
         {
-        CE_CORE_DEBUG ( "Recreating swapchain..." );
-
-        vkDeviceWaitIdle ( Context->GetDevice () );
-        CleanupSwapchain ();
-        Initialize ( window );
-        }
-
-    void CEVulkanSwapchain::CreateSwapchain ( CEWindow * window )
-        {
-        auto physicalDevice = Context->GetPhysicalDevice ();
-        auto device = Context->GetDevice ();
-        auto surface = Context->GetSurface ();
+        auto physicalDevice = m_Context->GetPhysicalDevice ();
+        auto device = m_Context->GetDevice ();
+        auto surface = m_Context->GetSurface ();
 
         // Get swapchain capabilities
         VkSurfaceCapabilitiesKHR capabilities;
@@ -117,15 +60,13 @@ namespace CE
         // Get available formats
         uint32_t formatCount;
         vkGetPhysicalDeviceSurfaceFormatsKHR ( physicalDevice, surface, &formatCount, nullptr );
-        CEArray<VkSurfaceFormatKHR> availableFormats;
-        availableFormats.Resize ( formatCount );
+        CEArray<VkSurfaceFormatKHR> availableFormats ( formatCount );
         vkGetPhysicalDeviceSurfaceFormatsKHR ( physicalDevice, surface, &formatCount, availableFormats.RawData () );
 
         // Get available present modes
         uint32_t presentModeCount;
         vkGetPhysicalDeviceSurfacePresentModesKHR ( physicalDevice, surface, &presentModeCount, nullptr );
-        CEArray<VkPresentModeKHR> availablePresentModes;
-        availablePresentModes.Resize ( presentModeCount );
+        CEArray<VkPresentModeKHR> availablePresentModes ( presentModeCount );
         vkGetPhysicalDeviceSurfacePresentModesKHR ( physicalDevice, surface, &presentModeCount, availablePresentModes.RawData () );
 
         // Choose swapchain settings
@@ -152,8 +93,11 @@ namespace CE
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         // Set up queue families
-        auto queueIndices = Context->GetQueueFamilyIndices ();
-        uint32_t queueFamilyIndices [] = { queueIndices.graphicsFamily.value (), queueIndices.presentFamily.value () };
+        auto queueIndices = m_Context->GetQueueFamilyIndices ();
+        uint32_t queueFamilyIndices [] = {
+            queueIndices.graphicsFamily.value (),
+            queueIndices.presentFamily.value ()
+            };
 
         if (queueIndices.graphicsFamily != queueIndices.presentFamily)
             {
@@ -172,36 +116,36 @@ namespace CE
         createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         createInfo.presentMode = presentMode;
         createInfo.clipped = VK_TRUE;
-        createInfo.oldSwapchain = VK_NULL_HANDLE;
+        createInfo.oldSwapchain = oldSwapchain;
 
-        if (vkCreateSwapchainKHR ( device, &createInfo, nullptr, &Swapchain ) != VK_SUCCESS)
+        if (vkCreateSwapchainKHR ( device, &createInfo, nullptr, &m_Swapchain ) != VK_SUCCESS)
             {
             throw std::runtime_error ( "Failed to create swap chain!" );
             }
 
             // Get swapchain images
-        vkGetSwapchainImagesKHR ( device, Swapchain, &imageCount, nullptr );
-        Images.Resize ( imageCount );
-        vkGetSwapchainImagesKHR ( device, Swapchain, &imageCount, Images.RawData () );
+        vkGetSwapchainImagesKHR ( device, m_Swapchain, &imageCount, nullptr );
+        m_Images.Resize ( imageCount );
+        vkGetSwapchainImagesKHR ( device, m_Swapchain, &imageCount, m_Images.RawData () );
 
-        ImageFormat = surfaceFormat.format;
-        Extent = extent;
+        m_ImageFormat = surfaceFormat.format;
+        m_Extent = extent;
 
         CE_CORE_DEBUG ( "Swapchain created with {} images", imageCount );
         }
 
     void CEVulkanSwapchain::CreateImageViews ()
         {
-        auto device = Context->GetDevice ();
-        ImageViews.Resize ( Images.Size () );
+        auto device = m_Context->GetDevice ();
+        m_ImageViews.Resize ( m_Images.Size () );
 
-        for (uint64 i = 0; i < Images.Size (); i++)
+        for (uint64_t i = 0; i < m_Images.Size (); i++)
             {
             VkImageViewCreateInfo createInfo {};
             createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            createInfo.image = Images[ i ];
+            createInfo.image = m_Images[ i ];
             createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            createInfo.format = ImageFormat;
+            createInfo.format = m_ImageFormat;
             createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -212,7 +156,7 @@ namespace CE
             createInfo.subresourceRange.baseArrayLayer = 0;
             createInfo.subresourceRange.layerCount = 1;
 
-            if (vkCreateImageView ( device, &createInfo, nullptr, &ImageViews[ i ] ) != VK_SUCCESS)
+            if (vkCreateImageView ( device, &createInfo, nullptr, &m_ImageViews[ i ] ) != VK_SUCCESS)
                 {
                 throw std::runtime_error ( "Failed to create image views!" );
                 }
@@ -223,14 +167,11 @@ namespace CE
 
     void CEVulkanSwapchain::CreateRenderPass ()
         {
-        auto device = Context->GetDevice ();
+        auto device = m_Context->GetDevice ();
 
-        // ИСПРАВЛЯЕМ: Вместо std::format используем простой вывод
-        CE_CORE_DEBUG ( "Creating render pass" );
-        CE_CORE_DEBUG ( "Creating render pass with format: {}", Context->FormatToString ( ImageFormat ) );
         // Color attachment
         VkAttachmentDescription colorAttachment {};
-        colorAttachment.format = ImageFormat;
+        colorAttachment.format = m_ImageFormat;
         colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -243,33 +184,49 @@ namespace CE
         colorAttachmentRef.attachment = 0;
         colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-        // УПРОЩАЕМ: Временно убираем depth attachment
+        // Depth attachment
+        VkAttachmentDescription depthAttachment {};
+        depthAttachment.format = m_Context->FindDepthFormat ();
+        depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        VkAttachmentReference depthAttachmentRef {};
+        depthAttachmentRef.attachment = 1;
+        depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        // Subpass
         VkSubpassDescription subpass {};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 1;
         subpass.pColorAttachments = &colorAttachmentRef;
-        subpass.pDepthStencilAttachment = nullptr; // Без depth attachment
+        subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
         // Dependency
         VkSubpassDependency dependency {};
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.srcAccessMask = 0;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
         // Create render pass
+        std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
         VkRenderPassCreateInfo renderPassInfo {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = 1; // Только color attachment
-        renderPassInfo.pAttachments = &colorAttachment;
+        renderPassInfo.attachmentCount = static_cast< uint32_t >( attachments.size () );
+        renderPassInfo.pAttachments = attachments.data ();
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpass;
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        if (vkCreateRenderPass ( device, &renderPassInfo, nullptr, &RenderPass ) != VK_SUCCESS)
+        if (vkCreateRenderPass ( device, &renderPassInfo, nullptr, &m_RenderPass ) != VK_SUCCESS)
             {
             throw std::runtime_error ( "Failed to create render pass!" );
             }
@@ -279,26 +236,26 @@ namespace CE
 
     void CEVulkanSwapchain::CreateFramebuffers ()
         {
-        auto device = Context->GetDevice ();
-        Framebuffers.Resize ( ImageViews.Size () );
+        auto device = m_Context->GetDevice ();
+        m_Framebuffers.Resize ( m_ImageViews.Size () );
 
-        for (uint64 i = 0; i < ImageViews.Size (); i++)
+        for (uint64_t i = 0; i < m_ImageViews.Size (); i++)
             {
-            VkImageView attachments[ 2 ] = {
-                ImageViews[ i ],
-                DepthImageView
+            std::array<VkImageView, 2> attachments = {
+                m_ImageViews[ i ],
+                m_DepthImageView
                 };
 
             VkFramebufferCreateInfo framebufferInfo {};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = RenderPass;
-            framebufferInfo.attachmentCount = 2;
-            framebufferInfo.pAttachments = attachments;
-            framebufferInfo.width = Extent.width;
-            framebufferInfo.height = Extent.height;
+            framebufferInfo.renderPass = m_RenderPass;
+            framebufferInfo.attachmentCount = static_cast< uint32_t > ( attachments.size () );
+            framebufferInfo.pAttachments = attachments.data ();
+            framebufferInfo.width = m_Extent.width;
+            framebufferInfo.height = m_Extent.height;
             framebufferInfo.layers = 1;
 
-            if (vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &Framebuffers[ i ] ) != VK_SUCCESS)
+            if (vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &m_Framebuffers[ i ] ) != VK_SUCCESS)
                 {
                 throw std::runtime_error ( "Failed to create framebuffer!" );
                 }
@@ -309,15 +266,15 @@ namespace CE
 
     void CEVulkanSwapchain::CreateDepthResources ()
         {
-        auto device = Context->GetDevice ();
-        VkFormat depthFormat = Context->FindDepthFormat ();
+        auto device = m_Context->GetDevice ();
+        VkFormat depthFormat = m_Context->FindDepthFormat ();
 
         // Create depth image
         VkImageCreateInfo imageInfo {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent.width = Extent.width;
-        imageInfo.extent.height = Extent.height;
+        imageInfo.extent.width = m_Extent.width;
+        imageInfo.extent.height = m_Extent.height;
         imageInfo.extent.depth = 1;
         imageInfo.mipLevels = 1;
         imageInfo.arrayLayers = 1;
@@ -328,31 +285,31 @@ namespace CE
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-        if (vkCreateImage ( device, &imageInfo, nullptr, &DepthImage ) != VK_SUCCESS)
+        if (vkCreateImage ( device, &imageInfo, nullptr, &m_DepthImage ) != VK_SUCCESS)
             {
             throw std::runtime_error ( "Failed to create depth image!" );
             }
 
             // Allocate memory for depth image
         VkMemoryRequirements memRequirements;
-        vkGetImageMemoryRequirements ( device, DepthImage, &memRequirements );
+        vkGetImageMemoryRequirements ( device, m_DepthImage, &memRequirements );
 
         VkMemoryAllocateInfo allocInfo {};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = Context->FindMemoryType ( memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+        allocInfo.memoryTypeIndex = m_Context->FindMemoryType ( memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 
-        if (vkAllocateMemory ( device, &allocInfo, nullptr, &DepthImageMemory ) != VK_SUCCESS)
+        if (vkAllocateMemory ( device, &allocInfo, nullptr, &m_DepthImageMemory ) != VK_SUCCESS)
             {
             throw std::runtime_error ( "Failed to allocate depth image memory!" );
             }
 
-        vkBindImageMemory ( device, DepthImage, DepthImageMemory, 0 );
+        vkBindImageMemory ( device, m_DepthImage, m_DepthImageMemory, 0 );
 
         // Create depth image view
         VkImageViewCreateInfo viewInfo {};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.image = DepthImage;
+        viewInfo.image = m_DepthImage;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = depthFormat;
         viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -361,7 +318,7 @@ namespace CE
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView ( device, &viewInfo, nullptr, &DepthImageView ) != VK_SUCCESS)
+        if (vkCreateImageView ( device, &viewInfo, nullptr, &m_DepthImageView ) != VK_SUCCESS)
             {
             throw std::runtime_error ( "Failed to create depth image view!" );
             }
@@ -369,96 +326,38 @@ namespace CE
         CE_CORE_DEBUG ( "Depth resources created" );
         }
 
-    VkResult CEVulkanSwapchain::AcquireNextImage ( VkSemaphore imageAvailableSemaphore )
+    VkResult CEVulkanSwapchain::AcquireNextImage ( VkSemaphore imageAvailableSemaphore, uint32_t * imageIndex )
         {
-        auto device = Context->GetDevice ();
-        VkResult result = vkAcquireNextImageKHR (
+        auto device = m_Context->GetDevice ();
+        return vkAcquireNextImageKHR (
             device,
-            Swapchain,
+            m_Swapchain,
             UINT64_MAX,
             imageAvailableSemaphore,
             VK_NULL_HANDLE,
-            &CurrentImageIndex
+            imageIndex
         );
-
-        if (result == VK_ERROR_OUT_OF_DATE_KHR)
-            {
-            CE_CORE_DEBUG ( "Swapchain out of date during image acquisition" );
-            return result;
-            }
-        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-            {
-            CE_CORE_ERROR ( "Failed to acquire swap chain image: {}", static_cast< int >( result ) );
-            throw std::runtime_error ( "Failed to acquire swap chain image!" );
-            }
-
-        return result;
         }
 
-    VkResult CEVulkanSwapchain::SubmitCommandBuffer ( VkCommandBuffer commandBuffer, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence )
-                {
-
-                
-
-        auto graphicsQueue = Context->GetGraphicsQueue ();
-        auto presentQueue = Context->GetPresentQueue ();
-
-        VkSubmitInfo submitInfo {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-        VkSemaphore waitSemaphores [] = { waitSemaphore };
-        VkPipelineStageFlags waitStages [] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = waitSemaphores;
-        submitInfo.pWaitDstStageMask = waitStages;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
-
-        VkSemaphore signalSemaphores [] = { signalSemaphore };
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = signalSemaphores;
-
-
-        VkResult submitResult = vkQueueSubmit ( graphicsQueue, 1, &submitInfo, fence );
-       
-        if (submitResult != VK_SUCCESS)
-            {
-            CE_CORE_ERROR ( "Failed to submit draw command buffer: {}", static_cast< int >( submitResult ) );
-            return submitResult;
-            }
+    VkResult CEVulkanSwapchain::Present ( uint32_t imageIndex, VkSemaphore renderFinishedSemaphore )
+        {
+        auto presentQueue = m_Context->GetPresentQueue ();
 
         VkPresentInfoKHR presentInfo {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = signalSemaphores;
+        presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
 
-        VkSwapchainKHR swapChains [] = { Swapchain };
+        VkSwapchainKHR swapChains [] = { m_Swapchain };
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
-        presentInfo.pImageIndices = &CurrentImageIndex;
+        presentInfo.pImageIndices = &imageIndex;
         presentInfo.pResults = nullptr;
 
-        VkResult presentResult = vkQueuePresentKHR ( presentQueue, &presentInfo );
-
-        if (presentResult == VK_SUCCESS)
-            {
-           
-            }
-        else if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR)
-            {
-            CE_CORE_DEBUG ( "Swapchain out of date during presentation" );
-            return presentResult;
-            }
-        else if (presentResult != VK_SUCCESS)
-            {
-            CE_CORE_ERROR ( "Failed to present swap chain image: {}", static_cast< int >( presentResult ) );
-            throw std::runtime_error ( "Failed to present swap chain image!" );
-            }
-
-        return presentResult;
+        return vkQueuePresentKHR ( presentQueue, &presentInfo );
         }
 
-        // Helper methods
+        // Helper methods implementation...
     VkSurfaceFormatKHR CEVulkanSwapchain::ChooseSwapSurfaceFormat ( const CEArray<VkSurfaceFormatKHR> & availableFormats )
         {
         for (const auto & availableFormat : availableFormats)
@@ -495,13 +394,6 @@ namespace CE
             int width, height;
             glfwGetFramebufferSize ( window->GetNativeWindow (), &width, &height );
 
-            // Проверка минимального размера
-            if (width == 0 || height == 0)
-                {
-                    // Возвращаем минимально допустимый размер
-                return capabilities.minImageExtent;
-                }
-
             VkExtent2D actualExtent = {
                 static_cast< uint32_t >( width ),
                 static_cast< uint32_t >( height )
@@ -518,48 +410,49 @@ namespace CE
 
     void CEVulkanSwapchain::CleanupSwapchain ()
         {
-        auto device = Context->GetDevice ();
+        auto device = m_Context ? m_Context->GetDevice () : VK_NULL_HANDLE;
+        if (!device) return;
 
-        if (DepthImageView != VK_NULL_HANDLE)
-            {
-            vkDestroyImageView ( device, DepthImageView, nullptr );
-            DepthImageView = VK_NULL_HANDLE;
-            }
-
-        if (DepthImage != VK_NULL_HANDLE)
-            {
-            vkDestroyImage ( device, DepthImage, nullptr );
-            DepthImage = VK_NULL_HANDLE;
-            }
-
-        if (DepthImageMemory != VK_NULL_HANDLE)
-            {
-            vkFreeMemory ( device, DepthImageMemory, nullptr );
-            DepthImageMemory = VK_NULL_HANDLE;
-            }
-
-        for (auto framebuffer : Framebuffers)
+        for (auto framebuffer : m_Framebuffers)
             {
             vkDestroyFramebuffer ( device, framebuffer, nullptr );
             }
-        Framebuffers.Clear ();
+        m_Framebuffers.Clear ();
 
-        if (RenderPass != VK_NULL_HANDLE)
+        if (m_DepthImageView != VK_NULL_HANDLE)
             {
-            vkDestroyRenderPass ( device, RenderPass, nullptr );
-            RenderPass = VK_NULL_HANDLE;
+            vkDestroyImageView ( device, m_DepthImageView, nullptr );
+            m_DepthImageView = VK_NULL_HANDLE;
             }
 
-        for (auto imageView : ImageViews)
+        if (m_DepthImage != VK_NULL_HANDLE)
+            {
+            vkDestroyImage ( device, m_DepthImage, nullptr );
+            m_DepthImage = VK_NULL_HANDLE;
+            }
+
+        if (m_DepthImageMemory != VK_NULL_HANDLE)
+            {
+            vkFreeMemory ( device, m_DepthImageMemory, nullptr );
+            m_DepthImageMemory = VK_NULL_HANDLE;
+            }
+
+        for (auto imageView : m_ImageViews)
             {
             vkDestroyImageView ( device, imageView, nullptr );
             }
-        ImageViews.Clear ();
+        m_ImageViews.Clear ();
 
-        if (Swapchain != VK_NULL_HANDLE)
+        if (m_RenderPass != VK_NULL_HANDLE)
             {
-            vkDestroySwapchainKHR ( device, Swapchain, nullptr );
-            Swapchain = VK_NULL_HANDLE;
+            vkDestroyRenderPass ( device, m_RenderPass, nullptr );
+            m_RenderPass = VK_NULL_HANDLE;
+            }
+
+        if (m_Swapchain != VK_NULL_HANDLE)
+            {
+            vkDestroySwapchainKHR ( device, m_Swapchain, nullptr );
+            m_Swapchain = VK_NULL_HANDLE;
             }
 
         CE_CORE_DEBUG ( "Swapchain cleaned up" );

@@ -4,25 +4,16 @@
 
 namespace CE
     {
-    CELightPipeline::CELightPipeline ( CEVulkanContext * context )
-        : CEVulkanBasePipeline ( context,
-                                 PipelineConfig {
-                                     "Light",
-                                     VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                                     VK_POLYGON_MODE_FILL,
-                                     VK_CULL_MODE_FRONT_BIT, // Light usually uses front face culling
-                                     VK_FRONT_FACE_COUNTER_CLOCKWISE,
-                                     true,   // depth test
-                                     false,  // depth write - lights usually don't write depth
-                                     true    // blend enable - lights use additive blending
-                                 } )
+    CELightPipeline::CELightPipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager )
+        : CEVulkanBasePipeline ( context, shaderManager, PipelineConfig { "LightPipeline" } )
         {
+         // Устанавливаем специфичные для LightPipeline шейдеры
+      //  SetVertexShader ( "Resources/Shaders/Vulkan/light.vert" );
+      //  SetFragmentShader ( "Resources/Shaders/Vulkan/light.frag" );
+       
         }
 
-    bool CELightPipeline::Initialize ( VkRenderPass renderPass )
-        {
-        return CEVulkanBasePipeline::Initialize ( renderPass );
-        }
+  
 
     bool CELightPipeline::CreateDescriptorSetLayout ()
         {

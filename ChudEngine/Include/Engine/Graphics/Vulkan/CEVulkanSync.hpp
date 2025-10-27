@@ -6,42 +6,44 @@
 namespace CE
     {
     class CEVulkanContext;
+    class CEVulkanSwapchain;
+    class CEVulkanCommandBuffer;
 
     class CEVulkanSync
         {
         public:
-            static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-
-            CEVulkanSync ( CEVulkanContext * context );
+            CEVulkanSync ();
             ~CEVulkanSync ();
 
-            bool Initialize ();
+            bool Initialize ( CEVulkanContext * context, uint32_t maxFramesInFlight );
             void Shutdown ();
 
-            // Основные методы синхронизации
-            bool WaitForFrameFence ();      // Только ожидание fence
-            bool ResetFrameFence ();        // Только сброс fence
-            bool IsFrameFenceSignaled ();   // Проверка состояния fence
+            // Frame synchronization
+            VkResult AcquireNextImage ( CEVulkanSwapchain * swapchain, uint32_t * imageIndex );
+            bool SubmitFrame ( CEVulkanCommandBuffer * commandBuffer, CEVulkanSwapchain * swapchain, uint32_t imageIndex );
 
-            // Устаревший метод - для обратной совместимости
-            void WaitForFrame ();
-
-            void SubmitFrame ();
-
-            VkSemaphore GetImageAvailableSemaphore () const { return ImageAvailableSemaphores[ CurrentFrame ]; }
-            VkSemaphore GetRenderFinishedSemaphore () const { return RenderFinishedSemaphores[ CurrentFrame ]; }
-            VkFence GetInFlightFence () const { return InFlightFences[ CurrentFrame ]; }
-            uint32_t GetCurrentFrame () const { return CurrentFrame; }
+            // Getters
+            VkSemaphore GetCurrentImageAvailableSemaphore () const {
+                return m_ImageAvailableSemaphores[ m_CurrentFrame ];
+                }
+            VkSemaphore GetCurrentRenderFinishedSemaphore () const {
+                return m_RenderFinishedSemaphores[ m_CurrentFrame ];
+                }
+            VkFence GetCurrentInFlightFence () const {
+                return m_InFlightFences[ m_CurrentFrame ];
+                }
+            uint32_t GetCurrentFrame () const { return m_CurrentFrame; }
 
             void AdvanceFrame ();
 
         private:
             void CreateSyncObjects ();
 
-            CEVulkanContext * Context = nullptr;
-            CEArray<VkSemaphore> ImageAvailableSemaphores;
-            CEArray<VkSemaphore> RenderFinishedSemaphores;
-            CEArray<VkFence> InFlightFences;
-            uint32_t CurrentFrame = 0;
+            CEVulkanContext * m_Context = nullptr;
+            CEArray<VkSemaphore> m_ImageAvailableSemaphores;
+            CEArray<VkSemaphore> m_RenderFinishedSemaphores;
+            CEArray<VkFence> m_InFlightFences;
+            uint32_t m_CurrentFrame = 0;
+            uint32_t m_MaxFramesInFlight = 2;
         };
     }

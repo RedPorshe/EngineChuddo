@@ -5,8 +5,9 @@
 
 namespace CE
     {
-    CEVulkanPipelineManager::CEVulkanPipelineManager ( CEVulkanContext * context )
+    CEVulkanPipelineManager::CEVulkanPipelineManager ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager )
         : m_Context ( context )
+        , m_ShaderManager ( shaderManager )
         {
         CE_CORE_DEBUG ( "Vulkan pipeline manager created" );
         }
@@ -20,50 +21,17 @@ namespace CE
         {
         m_MainRenderPass = mainRenderPass;
 
-        CE_CORE_DEBUG ( "Initializing pipeline manager with {} pipeline types",
-                        static_cast< int >( PipelineType::Count ) );
+        CE_CORE_DEBUG ( "Initializing pipeline manager" );
 
-          // Временно создаем только StaticMesh пайплайн с минимальной конфигурацией
-        if (!CreateMinimalPipeline ( PipelineType::StaticMesh, m_MainRenderPass ))
+        // Create default pipeline first
+        if (!CreateDefaultPipeline ( mainRenderPass ))
             {
-            CE_CORE_ERROR ( "Failed to create minimal StaticMesh pipeline" );
+            CE_CORE_ERROR ( "Failed to create default pipeline" );
             return false;
             }
 
-        CE_CORE_DEBUG ( "Pipeline manager initialized successfully with {} pipelines",
-                        m_Pipelines.size () );
+        CE_CORE_DEBUG ( "Pipeline manager initialized successfully with {} pipelines", m_Pipelines.size () );
         return true;
-        }
-
-    bool CEVulkanPipelineManager::CreateMinimalPipeline ( PipelineType type, VkRenderPass renderPass )
-        {
-        CE_CORE_DEBUG ( "Creating minimal pipeline type: {}", static_cast< int >( type ) );
-
-        // Создаем минимальную конфигурацию
-        PipelineConfig config;
-        config.Name = "StaticMesh";
-        config.Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        config.PolygonMode = VK_POLYGON_MODE_FILL;
-        config.CullMode = VK_CULL_MODE_BACK_BIT;
-        config.FrontFace = VK_FRONT_FACE_CLOCKWISE;
-        config.DepthTest = VK_TRUE;  // Временно отключаем
-        config.DepthWrite = VK_TRUE; // Временно отключаем
-        config.BlendEnable = VK_TRUE;
-
-        std::unique_ptr<CEVulkanBasePipeline> pipeline = std::make_unique<CEVulkanBasePipeline> ( m_Context, config );
-
-        if (pipeline->Initialize ( renderPass ))
-            {
-            m_Pipelines[ type ] = std::move ( pipeline );
-            CE_CORE_DEBUG ( "Minimal pipeline type {} created successfully: {}",
-                            static_cast< int >( type ), m_Pipelines[ type ]->GetName () );
-            return true;
-            }
-        else
-            {
-            CE_CORE_ERROR ( "Failed to initialize minimal pipeline type {}", static_cast< int >( type ) );
-            return false;
-            }
         }
 
     void CEVulkanPipelineManager::Shutdown ()
@@ -82,6 +50,24 @@ namespace CE
         CE_CORE_DEBUG ( "Pipeline manager shutdown complete" );
         }
 
+    void CEVulkanPipelineManager::RecreatePipelines ( VkRenderPass newRenderPass )
+        {
+        CE_CORE_DEBUG ( "Recreating all pipelines for new render pass" );
+
+        m_MainRenderPass = newRenderPass;
+
+        for (auto & [type, pipeline] : m_Pipelines)
+            {
+            if (pipeline)
+                {
+                pipeline->Shutdown ();
+                pipeline->Initialize ( newRenderPass );
+                }
+            }
+
+        CE_CORE_DEBUG ( "All pipelines recreated" );
+        }
+
     CEVulkanBasePipeline * CEVulkanPipelineManager::GetPipeline ( PipelineType type )
         {
         auto it = m_Pipelines.find ( type );
@@ -90,7 +76,13 @@ namespace CE
             return it->second.get ();
             }
 
-        CE_CORE_WARN ( "Pipeline type {} not found", static_cast< int >( type ) );
+            // Try to create the pipeline if it doesn't exist
+        if (CreatePipeline ( type, m_MainRenderPass ))
+            {
+            return m_Pipelines[ type ].get ();
+            }
+
+        CE_CORE_WARN ( "Pipeline type {} not found and could not be created", static_cast< int >( type ) );
         return nullptr;
         }
 
@@ -105,12 +97,8 @@ namespace CE
 
         CE_CORE_DEBUG ( "Reloading pipeline: {}", pipeline->GetName () );
 
-        // Сохраняем текущий render pass
-        VkRenderPass renderPass = pipeline->GetLayout () ? m_MainRenderPass : VK_NULL_HANDLE;
-
-        // Пересоздаем пайплайн
         pipeline->Shutdown ();
-        if (!pipeline->Initialize ( renderPass ))
+        if (!pipeline->Initialize ( m_MainRenderPass ))
             {
             CE_CORE_ERROR ( "Failed to reload pipeline type {}", static_cast< int >( type ) );
             return false;
@@ -148,20 +136,23 @@ namespace CE
         switch (type)
             {
                 case PipelineType::StaticMesh:
-                    pipeline = std::make_unique<CEStaticMeshPipeline> ( m_Context );
+                    pipeline = std::make_unique<CEStaticMeshPipeline> ( m_Context, m_ShaderManager );
                     break;
 
                 case PipelineType::SkeletalMesh:
-                    pipeline = std::make_unique<CESkeletalMeshPipeline> ( m_Context );
+                    pipeline = std::make_unique<CESkeletalMeshPipeline> ( m_Context, m_ShaderManager );
                     break;
 
                 case PipelineType::Light:
-                    pipeline = std::make_unique<CELightPipeline> ( m_Context );
+                    pipeline = std::make_unique<CELightPipeline> ( m_Context, m_ShaderManager );
                     break;
 
                 case PipelineType::PostProcess:
-                    pipeline = std::make_unique<CEPostProcessPipeline> ( m_Context );
+                    pipeline = std::make_unique<CEPostProcessPipeline> ( m_Context, m_ShaderManager );
                     break;
+
+                case PipelineType::Default:
+                    return CreateDefaultPipeline ( renderPass );
 
                 case PipelineType::Skybox:
                     // TODO: Implement SkyboxPipeline
@@ -194,6 +185,43 @@ namespace CE
                 }
             }
 
+        return false;
+        }
+
+    bool CEVulkanPipelineManager::CreateDefaultPipeline ( VkRenderPass renderPass )
+        {
+        CE_CORE_DEBUG ( "Creating default pipeline" );
+
+        PipelineConfig config;
+        config.Name = "DefaultPipeline";
+        config.Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        config.PolygonMode = VK_POLYGON_MODE_FILL;
+        config.CullMode = VK_CULL_MODE_BACK_BIT;
+        config.FrontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        config.DepthTest = true;
+        config.DepthWrite = true;
+        config.BlendEnable = false;
+
+        auto pipeline = std::make_unique<CEVulkanBasePipeline> ( m_Context, m_ShaderManager, config );
+
+        // Set default shader paths
+        std::string vertPath = "Resources/Shaders/Vulkan/triangle.vert";
+        std::string fragPath = "Resources/Shaders/Vulkan/triangle.frag";
+
+        if (!pipeline->SetVertexShader ( vertPath ) || !pipeline->SetFragmentShader ( fragPath ))
+            {
+            CE_CORE_ERROR ( "Failed to set default shaders for pipeline" );
+            return false;
+            }
+
+        if (pipeline->Initialize ( renderPass ))
+            {
+            m_Pipelines[ PipelineType::Default ] = std::move ( pipeline );
+            CE_CORE_DEBUG ( "Default pipeline created successfully" );
+            return true;
+            }
+
+        CE_CORE_ERROR ( "Failed to initialize default pipeline" );
         return false;
         }
     }

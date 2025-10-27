@@ -11,34 +11,32 @@ namespace CE
     class CEVulkanSwapchain
         {
         public:
-            CEVulkanSwapchain ( CEVulkanContext * context );
+            CEVulkanSwapchain ();
             ~CEVulkanSwapchain ();
 
-            bool Initialize ( CEWindow * window );
+            bool Initialize ( CEVulkanContext * context, CEWindow * window, CEVulkanSwapchain * oldSwapchain = nullptr );
             void Shutdown ();
-            void Recreate ( CEWindow * window );
 
             // Getters
-            VkSwapchainKHR GetSwapchain () const { return Swapchain; }
-            VkRenderPass GetRenderPass () const { return RenderPass; }
-            VkFormat GetImageFormat () const { return ImageFormat; }
-            VkExtent2D GetExtent () const { return Extent; }
-            const CEArray<VkImage> & GetImages () const { return Images; }
-            const CEArray<VkImageView> & GetImageViews () const { return ImageViews; }
-            const CEArray<VkFramebuffer> & GetFramebuffers () const { return Framebuffers; }
-            VkFramebuffer GetCurrentFramebuffer () const { return Framebuffers[ CurrentImageIndex ]; }
-            uint32_t GetCurrentImageIndex () const { return CurrentImageIndex; }
+            VkSwapchainKHR GetSwapchain () const { return m_Swapchain; }
+            VkRenderPass GetRenderPass () const { return m_RenderPass; }
+            VkFormat GetImageFormat () const { return m_ImageFormat; }
+            VkExtent2D GetExtent () const { return m_Extent; }
+            const CEArray<VkImage> & GetImages () const { return m_Images; }
+            const CEArray<VkImageView> & GetImageViews () const { return m_ImageViews; }
+            const CEArray<VkFramebuffer> & GetFramebuffers () const { return m_Framebuffers; }
+            VkFramebuffer GetFramebuffer ( uint32_t index ) const {
+                return ( index < m_Framebuffers.Size () ) ? m_Framebuffers[ index ] : VK_NULL_HANDLE;
+                }
+            uint32_t GetImageCount () const { return static_cast< uint32_t > ( m_Images.Size () ); }
+            uint32_t GetMaxFramesInFlight () const { return 2; } // Стандартное значение
 
-            // Frame acquisition
-            VkResult AcquireNextImage ( VkSemaphore imageAvailableSemaphore );
-            VkResult SubmitCommandBuffer ( VkCommandBuffer commandBuffer, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence );
-
-            bool CreateUIRenderPass ();
-           // VkRenderPass GetUIRenderPass () const { return UIRenderPass; }
-            VkRenderPass GetUIRenderPass () const { return RenderPass; }
+            // Frame operations
+            VkResult AcquireNextImage ( VkSemaphore imageAvailableSemaphore, uint32_t * imageIndex );
+            VkResult Present ( uint32_t imageIndex, VkSemaphore renderFinishedSemaphore );
 
         private:
-            void CreateSwapchain ( CEWindow * window );
+            void CreateSwapchain ( CEWindow * window, VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE );
             void CreateImageViews ();
             void CreateRenderPass ();
             void CreateFramebuffers ();
@@ -50,26 +48,22 @@ namespace CE
             VkPresentModeKHR ChooseSwapPresentMode ( const CEArray<VkPresentModeKHR> & availablePresentModes );
             VkExtent2D ChooseSwapExtent ( CEWindow * window, const VkSurfaceCapabilitiesKHR & capabilities );
 
-            CEVulkanContext * Context = nullptr;
+            CEVulkanContext * m_Context = nullptr;
 
             // Swapchain objects
-            VkSwapchainKHR Swapchain = VK_NULL_HANDLE;
-            CEArray<VkImage> Images;
-            CEArray<VkImageView> ImageViews;
-            VkFormat ImageFormat;
-            VkExtent2D Extent;
+            VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
+            CEArray<VkImage> m_Images;
+            CEArray<VkImageView> m_ImageViews;
+            VkFormat m_ImageFormat;
+            VkExtent2D m_Extent;
 
             // Render pass and framebuffers
-            VkRenderPass RenderPass = VK_NULL_HANDLE;
-            CEArray<VkFramebuffer> Framebuffers;
+            VkRenderPass m_RenderPass = VK_NULL_HANDLE;
+            CEArray<VkFramebuffer> m_Framebuffers;
 
             // Depth resources
-            VkImage DepthImage = VK_NULL_HANDLE;
-            VkDeviceMemory DepthImageMemory = VK_NULL_HANDLE;
-            VkImageView DepthImageView = VK_NULL_HANDLE;
-
-            // Current state
-            uint32_t CurrentImageIndex = 0;
-            VkRenderPass UIRenderPass = VK_NULL_HANDLE; // Добавляем если нужно отдельный
+            VkImage m_DepthImage = VK_NULL_HANDLE;
+            VkDeviceMemory m_DepthImageMemory = VK_NULL_HANDLE;
+            VkImageView m_DepthImageView = VK_NULL_HANDLE;
         };
     }

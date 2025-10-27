@@ -4,7 +4,7 @@
 
 namespace CE
     {
-    class CEVulkanContext;
+    class VulkanDevice;
 
     class CEVulkanBuffer
         {
@@ -19,10 +19,9 @@ namespace CE
             // Разрешаем перемещение
             CEVulkanBuffer ( CEVulkanBuffer && other ) noexcept;
             CEVulkanBuffer & operator=( CEVulkanBuffer && other ) noexcept;
-            VkDeviceMemory GetMemory () const { return m_Memory; }
 
             bool Create (
-                CEVulkanContext * context,
+                VulkanDevice * device,
                 VkDeviceSize size,
                 VkBufferUsageFlags usage,
                 VkMemoryPropertyFlags properties
@@ -33,18 +32,17 @@ namespace CE
 
             // Геттеры
             VkBuffer GetBuffer () const { return m_Buffer; }
+            VkDeviceMemory GetMemory () const { return m_Memory; }
             VkDeviceSize GetSize () const { return m_Size; }
             void * GetMappedData () const { return m_MappedData; }
             bool IsValid () const { return m_Buffer != VK_NULL_HANDLE; }
 
         private:
-            CEVulkanContext * m_Context = nullptr;
+            VulkanDevice * m_Device = nullptr;
             VkBuffer m_Buffer = VK_NULL_HANDLE;
             VkDeviceMemory m_Memory = VK_NULL_HANDLE;
             VkDeviceSize m_Size = 0;
             void * m_MappedData = nullptr;
             bool m_IsMapped = false;
-
-            uint32_t FindMemoryType ( uint32_t typeFilter, VkMemoryPropertyFlags properties );
         };
     }
