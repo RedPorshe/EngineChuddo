@@ -1,13 +1,8 @@
+// Graphics/Vulkan/Managers/CEVulkanPipelineManager.hpp
 #pragma once
 #include <unordered_map>
 #include <memory>
 #include "Graphics/Vulkan/BaseClasses/CEVulkanBasePipeline.hpp"
-#include "Graphics/Vulkan/Managers/CEVulkanShaderManager.hpp"
-
-#include "Graphics/Vulkan/PipeLines/CEStaticMeshPipeline.hpp"
-#include "Graphics/Vulkan/Pipelines/CESkeletalMeshPipeline.hpp"
-#include "Graphics/Vulkan/Pipelines/CELightPipeline.hpp"
-#include "Graphics/Vulkan/Pipelines/CEPostProcessPipeline.hpp"
 
 namespace CE
     {
@@ -19,7 +14,8 @@ namespace CE
         PostProcess,
         Skybox,
         UI,
-        Default,
+        Debug,
+        Shadow,
         Count
         };
 
@@ -33,25 +29,12 @@ namespace CE
             void Shutdown ();
             void RecreatePipelines ( VkRenderPass newRenderPass );
 
-            // Pipeline management
             CEVulkanBasePipeline * GetPipeline ( PipelineType type );
-            CEVulkanBasePipeline * GetDefaultPipeline () { return GetPipeline ( PipelineType::Default ); }
+            CEVulkanBasePipeline * GetDefaultPipeline () { return GetPipeline ( PipelineType::StaticMesh ); }
 
-            // Convenience accessors
-            CEStaticMeshPipeline * GetStaticMeshPipeline () {
-                return static_cast< CEStaticMeshPipeline * >( GetPipeline ( PipelineType::StaticMesh ) );
-                }
-
-            CESkeletalMeshPipeline * GetSkeletalMeshPipeline () {
-                return static_cast< CESkeletalMeshPipeline * >( GetPipeline ( PipelineType::SkeletalMesh ) );
-                }
-
-            CELightPipeline * GetLightPipeline () {
-                return static_cast< CELightPipeline * >( GetPipeline ( PipelineType::Light ) );
-                }
-
-            CEPostProcessPipeline * GetPostProcessPipeline () {
-                return static_cast< CEPostProcessPipeline * >( GetPipeline ( PipelineType::PostProcess ) );
+            template<typename T>
+            T * GetPipelineAs ( PipelineType type ) {
+                return static_cast< T * >( GetPipeline ( type ) );
                 }
 
             bool ReloadPipeline ( PipelineType type );
@@ -59,7 +42,6 @@ namespace CE
 
         private:
             bool CreatePipeline ( PipelineType type, VkRenderPass renderPass );
-            bool CreateDefaultPipeline ( VkRenderPass renderPass );
 
             CEVulkanContext * m_Context = nullptr;
             CEVulkanShaderManager * m_ShaderManager = nullptr;

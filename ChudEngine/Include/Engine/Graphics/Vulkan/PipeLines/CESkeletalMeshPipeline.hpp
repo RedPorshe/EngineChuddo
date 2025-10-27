@@ -1,5 +1,7 @@
+// Graphics/Vulkan/Pipelines/CESkeletalMeshPipeline.hpp
 #pragma once
 #include "Graphics/Vulkan/BaseClasses/CEVulkanBasePipeline.hpp"
+#include <vector>
 
 namespace CE
     {
@@ -7,10 +9,8 @@ namespace CE
         {
         public:
             CESkeletalMeshPipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager );
-            ~CESkeletalMeshPipeline () = default;
-           
+            ~CESkeletalMeshPipeline () override = default;
 
-            // Skeletal animation specific methods
             void UpdateBoneMatrices ( uint32_t currentImage, const std::vector<Math::Matrix4> & boneMatrices );
 
         private:
@@ -19,10 +19,9 @@ namespace CE
 
             struct SkeletalUniforms
                 {
-                alignas( 16 ) Math::Matrix4 bones[ 100 ]; // Max bones
+                alignas( 16 ) Math::Matrix4 bones[ 100 ];
                 };
 
-         //   std::vector<std::unique_ptr<CEVulkanBuffer>> m_BoneUniformBuffers;
             std::vector<void *> m_BoneUniformBuffersMapped;
         };
     }

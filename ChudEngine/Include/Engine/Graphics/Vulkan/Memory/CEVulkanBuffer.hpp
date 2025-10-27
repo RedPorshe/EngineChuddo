@@ -1,11 +1,10 @@
+// Graphics/Vulkan/Memory/CEVulkanBuffer.hpp
 #pragma once
 #include <vulkan/vulkan.h>
 #include <memory>
-#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
 
 namespace CE
     {
-    class VulkanDevice;
     class CEVulkanContext;
 
     class CEVulkanBuffer
@@ -14,33 +13,37 @@ namespace CE
             CEVulkanBuffer ();
             ~CEVulkanBuffer ();
 
-            // Запрещаем копирование
             CEVulkanBuffer ( const CEVulkanBuffer & ) = delete;
             CEVulkanBuffer & operator=( const CEVulkanBuffer & ) = delete;
 
-            // Разрешаем перемещение
             CEVulkanBuffer ( CEVulkanBuffer && other ) noexcept;
             CEVulkanBuffer & operator=( CEVulkanBuffer && other ) noexcept;
 
             bool Create ( CEVulkanContext * context, VkDeviceSize size,
                           VkBufferUsageFlags usage, VkMemoryPropertyFlags properties );
 
-            void UploadData ( const void * data, VkDeviceSize size );
+            void UploadData ( const void * data, VkDeviceSize size, VkDeviceSize offset = 0 );
+            void DownloadData ( void * data, VkDeviceSize size, VkDeviceSize offset = 0 );
             void Destroy ();
-            uint32_t FindMemoryType ( uint32_t typeFilter, VkMemoryPropertyFlags properties );
-            // Геттеры
+
+            void * Map ();
+            void Unmap ();
+            void Flush ( VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0 );
+
             VkBuffer GetBuffer () const { return m_Buffer; }
             VkDeviceMemory GetMemory () const { return m_Memory; }
             VkDeviceSize GetSize () const { return m_Size; }
             void * GetMappedData () const { return m_MappedData; }
             bool IsValid () const { return m_Buffer != VK_NULL_HANDLE; }
+            bool IsMapped () const { return m_IsMapped; }
 
         private:
-            VulkanDevice * m_Device = nullptr;
+            uint32_t FindMemoryType ( uint32_t typeFilter, VkMemoryPropertyFlags properties );
+
+            CEVulkanContext * m_Context = nullptr;
             VkBuffer m_Buffer = VK_NULL_HANDLE;
             VkDeviceMemory m_Memory = VK_NULL_HANDLE;
             VkDeviceSize m_Size = 0;
-            CEVulkanContext m_Context;
             void * m_MappedData = nullptr;
             bool m_IsMapped = false;
         };

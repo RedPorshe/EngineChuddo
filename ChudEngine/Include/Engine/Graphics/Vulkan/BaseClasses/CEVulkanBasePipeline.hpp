@@ -1,20 +1,19 @@
-// Runtime/Renderer/Vulkan/CEVulkanBasePipeline.hpp
+// Graphics/Vulkan/BaseClasses/CEVulkanBasePipeline.hpp
 #pragma once
 #include <vulkan/vulkan.h>
 #include <memory>
 #include <string>
-#include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
-#include "Graphics/Vulkan/Managers/CEVulkanShaderManager.hpp"
-
 #include "Math/Matrix.hpp"
 
 namespace CE
     {
+    class CEVulkanContext;
+    class CEVulkanShaderManager;
+
     struct MatrixPushConstants
         {
-            // Для column-major матриц НЕ нужно транспонировать!
-        Math::Matrix4 modelMatrix;        // 64 байта
-        Math::Matrix4 viewProjectionMatrix; // 64 байта
+        Math::Matrix4 modelMatrix;
+        Math::Matrix4 viewProjectionMatrix;
 
         MatrixPushConstants ()
             : modelMatrix ( Math::Matrix4::Identity () )
@@ -23,7 +22,6 @@ namespace CE
             }
         };
 
-        // Проверка размера
     static_assert( sizeof ( MatrixPushConstants ) == 128, "MatrixPushConstants size mismatch!" );
 
     struct PipelineConfig
@@ -36,6 +34,7 @@ namespace CE
         bool DepthTest = true;
         bool DepthWrite = true;
         bool BlendEnable = false;
+        VkSampleCountFlagBits MsaaSamples = VK_SAMPLE_COUNT_1_BIT;
         };
 
     class CEVulkanBasePipeline
@@ -44,43 +43,35 @@ namespace CE
             CEVulkanBasePipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager, const PipelineConfig & config );
             virtual ~CEVulkanBasePipeline ();
 
-            // Основной интерфейс
             virtual bool Initialize ( VkRenderPass renderPass );
             virtual void Shutdown ();
             virtual void Bind ( VkCommandBuffer commandBuffer );
 
-            // Управление шейдерами
             bool SetVertexShader ( const std::string & shaderPath );
             bool SetFragmentShader ( const std::string & shaderPath );
             bool ReloadShaders ();
 
-            // Геттеры
             VkPipeline GetPipeline () const { return m_GraphicsPipeline; }
             VkPipelineLayout GetLayout () const { return m_PipelineLayout; }
             VkDescriptorSetLayout GetDescriptorSetLayout () const { return m_DescriptorSetLayout; }
             const std::string & GetName () const { return m_Config.Name; }
 
         protected:
-            // Методы для наследования
             virtual bool CreateDescriptorSetLayout ();
             virtual bool CreatePipelineLayout ();
             virtual bool CreateGraphicsPipeline ( VkRenderPass renderPass );
 
-            // Вспомогательные методы
             VkPipelineShaderStageCreateInfo CreateShaderStageInfo (
                 std::shared_ptr<CEVulkanShaderManager::ShaderModule> shader );
 
-            // Ресурсы
             CEVulkanContext * m_Context = nullptr;
             CEVulkanShaderManager * m_ShaderManager = nullptr;
             PipelineConfig m_Config;
 
-            // Vulkan объекты
             VkPipeline m_GraphicsPipeline = VK_NULL_HANDLE;
             VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
             VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
 
-            // Шейдеры
             std::shared_ptr<CEVulkanShaderManager::ShaderModule> m_VertexShader;
             std::shared_ptr<CEVulkanShaderManager::ShaderModule> m_FragmentShader;
             std::string m_VertexShaderPath;

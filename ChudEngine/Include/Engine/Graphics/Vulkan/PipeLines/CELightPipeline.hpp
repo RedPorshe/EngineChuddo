@@ -7,10 +7,8 @@ namespace CE
         {
         public:
             CELightPipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager );
+            ~CELightPipeline () override = default;
 
-          
- 
-            // Light specific methods
             void UpdateLightData ( uint32_t currentImage, const Math::Vector3 & position,
                                    const Math::Vector3 & color, float intensity );
 
@@ -25,7 +23,6 @@ namespace CE
                 alignas( 4 ) float intensity;
                 };
 
-           
             std::vector<void *> m_LightUniformBuffersMapped;
         };
     }

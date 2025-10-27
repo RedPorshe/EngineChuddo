@@ -1,10 +1,10 @@
-// Runtime/Renderer/Vulkan/CEVulkanShaderManager.hpp
+// Graphics/Vulkan/Managers/CEVulkanShaderManager.hpp
 #pragma once
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <string>
 #include <memory>
-#include "Utils/Logger.hpp"
+#include <unordered_map>
 
 namespace CE
     {
@@ -13,28 +13,27 @@ namespace CE
     class CEVulkanShaderManager
         {
         public:
-            CEVulkanShaderManager ( CEVulkanContext * context );
-            ~CEVulkanShaderManager ();
-
             struct ShaderModule
                 {
                 VkShaderModule module = VK_NULL_HANDLE;
                 std::vector<uint32_t> code;
                 std::string path;
                 VkShaderStageFlagBits stage;
+                std::string entryPoint = "main";
                 };
 
-                // Основные операции
+            CEVulkanShaderManager ( CEVulkanContext * context );
+            ~CEVulkanShaderManager ();
+
             std::shared_ptr<ShaderModule> LoadShader ( const std::string & filename, VkShaderStageFlagBits stage );
             std::shared_ptr<ShaderModule> CompileAndLoadShader ( const std::string & sourcePath, VkShaderStageFlagBits stage );
             void ReloadAllShaders ();
 
-            // Управление модулями
             void DestroyShaderModule ( std::shared_ptr<ShaderModule> shaderModule );
             void Cleanup ();
 
-            // Вспомогательные методы
             static VkShaderStageFlagBits GetShaderStageFromExtension ( const std::string & filename );
+            static std::string GetShaderStageName ( VkShaderStageFlagBits stage );
 
         private:
             std::vector<uint32_t> ReadSPIRVFile ( const std::string & filename );
@@ -42,6 +41,6 @@ namespace CE
             VkShaderModule CreateShaderModule ( const std::vector<uint32_t> & code );
 
             CEVulkanContext * m_Context = nullptr;
-            std::vector<std::shared_ptr<ShaderModule>> m_ShaderModules;
+            std::unordered_map<std::string, std::shared_ptr<ShaderModule>> m_ShaderModules;
         };
     }

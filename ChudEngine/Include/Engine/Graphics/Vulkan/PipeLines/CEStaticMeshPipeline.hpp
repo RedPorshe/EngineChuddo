@@ -1,6 +1,6 @@
+// Graphics/Vulkan/Pipelines/CEStaticMeshPipeline.hpp
 #pragma once
 #include "Graphics/Vulkan/BaseClasses/CEVulkanBasePipeline.hpp"
-#include <memory>
 
 namespace CE
     {
@@ -8,11 +8,10 @@ namespace CE
         {
         public:
             CEStaticMeshPipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager );
-            ~CEStaticMeshPipeline () override = default;
-
-          
+            ~CEVulkanBasePipeline () override = default;
 
         private:
-            // Специфичные для StaticMesh ресурсы
+            bool CreateDescriptorSetLayout () override;
+            bool CreateGraphicsPipeline ( VkRenderPass renderPass ) override;
         };
     }

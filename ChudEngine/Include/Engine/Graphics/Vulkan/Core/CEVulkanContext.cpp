@@ -1,129 +1,136 @@
 #include "Graphics/Vulkan/Core/CEVulkanContext.hpp"
 #include "Platform/Window/CEWindow.hpp"
 #include "Utils/Logger.hpp"
-#include <stdexcept>
 #include <set>
-#include <cstring>
-#include <map>
+
+#ifdef _DEBUG
+#include <iostream>
+#endif
 
 namespace CE
     {
-    // Validation layers (only in debug builds)
-#ifdef _DEBUG
-    const CEArray<const char *> VALIDATION_LAYERS = [] ()
-        {
-        CEArray<const char *> layers;
-        layers.PushBack ( "VK_LAYER_KHRONOS_validation" );
-        return layers;
-        }( );
-#else
-    const CEArray<const char *> VALIDATION_LAYERS = [] ()
-        {
-        return CEArray<const char *> ();
-        }( );
-#endif
-
-    // Device extensions
-    const CEArray<const char *> DEVICE_EXTENSIONS = [] ()
-        {
-        CEArray<const char *> extensions;
-        extensions.PushBack ( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
-        return extensions;
-        }( );
-
     CEVulkanContext::CEVulkanContext ()
+        : m_Instance ( VK_NULL_HANDLE )
+        , m_Surface ( VK_NULL_HANDLE )
+        , m_Device ( std::make_unique<VulkanDevice> () )
         {
-        CE_CORE_DEBUG ( "Vulkan context created" );
         }
 
     CEVulkanContext::~CEVulkanContext ()
         {
-            // Shutdown should be called explicitly
+        Shutdown ();
         }
 
     bool CEVulkanContext::Initialize ( CEWindow * window )
         {
+        if (m_Instance != VK_NULL_HANDLE)
+            {
+            CE_CORE_WARN ( "Vulkan context already initialized" );
+            return true;
+            }
+
         try
             {
             CreateInstance ();
             CreateSurface ( window );
-            m_Device->Initialize (m_Instance,m_Surface);
-           
 
-            CE_CORE_DEBUG ( "Vulkan context initialized successfully" );
+            if (!m_Device->Initialize ( m_Instance, m_Surface ))
+                {
+                CE_CORE_ERROR ( "Failed to initialize Vulkan device" );
+                return false;
+                }
+
+            CE_CORE_INFO ( "Vulkan context initialized successfully" );
             return true;
             }
             catch (const std::exception & e)
                 {
                 CE_CORE_ERROR ( "Failed to initialize Vulkan context: {}", e.what () );
+                Shutdown ();
                 return false;
                 }
         }
 
     void CEVulkanContext::Shutdown ()
         {
-        m_Device->Shutdown ();
+        if (m_Device)
+            {
+            m_Device->Shutdown ();
+            }
 
-        CE_CORE_DEBUG ( "Vulkan context shutdown complete" );
+        if (m_Surface != VK_NULL_HANDLE)
+            {
+            vkDestroySurfaceKHR ( m_Instance, m_Surface, nullptr );
+            m_Surface = VK_NULL_HANDLE;
+            }
+
+        if (m_Instance != VK_NULL_HANDLE)
+            {
+            vkDestroyInstance ( m_Instance, nullptr );
+            m_Instance = VK_NULL_HANDLE;
+            }
         }
 
     void CEVulkanContext::CreateInstance ()
         {
-        VkApplicationInfo appInfo {};
+        VkApplicationInfo appInfo = {};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "ChudEngine";
+        appInfo.pApplicationName = "CE Application";
         appInfo.applicationVersion = VK_MAKE_VERSION ( 1, 0, 0 );
-        appInfo.pEngineName = "ChudEngine";
+        appInfo.pEngineName = "CE Engine";
         appInfo.engineVersion = VK_MAKE_VERSION ( 1, 0, 0 );
         appInfo.apiVersion = VK_API_VERSION_1_0;
 
-        VkInstanceCreateInfo createInfo {};
+        VkInstanceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
 
-        // Extensions
         auto extensions = GetRequiredExtensions ();
-        createInfo.enabledExtensionCount = static_cast< uint32_t >( extensions.Size () );
-        createInfo.ppEnabledExtensionNames = extensions.RawData ();
+        createInfo.enabledExtensionCount = static_cast< uint32_t >( extensions.size () );
+        createInfo.ppEnabledExtensionNames = extensions.data ();
 
-        // Validation layers
-        if (!VALIDATION_LAYERS.IsEmpty () && CheckValidationLayerSupport ())
+#ifdef _DEBUG
+        if (CheckValidationLayerSupport ())
             {
-            createInfo.enabledLayerCount = static_cast< uint32_t >( VALIDATION_LAYERS.Size () );
-            createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.RawData ();
+            createInfo.enabledLayerCount = static_cast< uint32_t >( m_ValidationLayers.size () );
+            createInfo.ppEnabledLayerNames = m_ValidationLayers.data ();
             }
         else
             {
+            CE_CORE_WARN ( "Validation layers requested, but not available!" );
             createInfo.enabledLayerCount = 0;
             }
+#else
+        createInfo.enabledLayerCount = 0;
+#endif
 
-        if (vkCreateInstance ( &createInfo, nullptr, &m_Instance ) != VK_SUCCESS)
+        VkResult result = vkCreateInstance ( &createInfo, nullptr, &m_Instance );
+        if (result != VK_SUCCESS)
             {
             throw std::runtime_error ( "Failed to create Vulkan instance" );
             }
 
-        CE_CORE_DEBUG ( "Vulkan instance created" );
+        CE_CORE_DEBUG ( "Vulkan instance created successfully" );
         }
 
     void CEVulkanContext::CreateSurface ( CEWindow * window )
         {
-        if (glfwCreateWindowSurface ( m_Instance, window->GetNativeWindow (), nullptr, &m_Surface ) != VK_SUCCESS)
+        if (!window->CreateVulkanSurface ( m_Instance, &m_Surface ))
             {
             throw std::runtime_error ( "Failed to create window surface" );
             }
-        CE_CORE_DEBUG ( "Vulkan surface created" );
+        CE_CORE_DEBUG ( "Vulkan surface created successfully" );
         }
- 
 
     bool CEVulkanContext::CheckValidationLayerSupport ()
         {
         uint32_t layerCount;
         vkEnumerateInstanceLayerProperties ( &layerCount, nullptr );
 
-        CEArray<VkLayerProperties> availableLayers ( layerCount );
-        vkEnumerateInstanceLayerProperties ( &layerCount, availableLayers.RawData () );
+        std::vector<VkLayerProperties> availableLayers ( layerCount );
+        vkEnumerateInstanceLayerProperties ( &layerCount, availableLayers.data () );
 
-        for (const char * layerName : VALIDATION_LAYERS)
+        for (const char * layerName : m_ValidationLayers)
             {
             bool layerFound = false;
 
@@ -145,26 +152,26 @@ namespace CE
         return true;
         }
 
-    CEArray<const char *> CEVulkanContext::GetRequiredExtensions ()
+    std::vector<const char *> CEVulkanContext::GetRequiredExtensions ()
         {
-        uint32_t glfwExtensionCount = 0;
-        const char ** glfwExtensions;
-        glfwExtensions = glfwGetRequiredInstanceExtensions ( &glfwExtensionCount );
+        std::vector<const char *> extensions;
 
-        CEArray<const char *> extensions;
-        extensions.Reserve ( glfwExtensionCount + 1 );
+        // Get window extensions
+        auto windowExtensions = CEWindow::GetRequiredVulkanExtensions ();
+        extensions.insert ( extensions.end (), windowExtensions.begin (), windowExtensions.end () );
 
-        for (uint32_t i = 0; i < glfwExtensionCount; ++i)
-            {
-            extensions.PushBack ( glfwExtensions[ i ] );
-            }
-
-        if (!VALIDATION_LAYERS.IsEmpty ())
-            {
-            extensions.PushBack ( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
-            }
+#ifdef _DEBUG
+        extensions.push_back ( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
+#endif
 
         return extensions;
         }
-           
+
+    bool CEVulkanContext::IsValid () const
+        {
+        return m_Instance != VK_NULL_HANDLE &&
+            m_Surface != VK_NULL_HANDLE &&
+            m_Device &&
+            m_Device->GetDevice () != VK_NULL_HANDLE;
+        }
     }

@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/CEObject/Components/CEComponent.hpp"
-#include "Graphics/Vulkan/Core/CEVulkanBuffer.hpp"
+#include "Graphics/Vulkan/CEVulkanBuffer.hpp"
 #include "Math/Vector.hpp"
 #include <memory>
 #include <array>

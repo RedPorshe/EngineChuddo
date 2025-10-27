@@ -1,12 +1,13 @@
+// Graphics/Vulkan/Core/CEVulkanContext.hpp
 #pragma once
 #include <vulkan/vulkan.h>
-#include "Core/Containers/CEArray.hpp"
-#include "Graphics/Vulkan/Core/VulkanDevice.hpp"
 #include <memory>
+#include <vector>
 
 namespace CE
     {
     class CEWindow;
+    class VulkanDevice;
 
     class CEVulkanContext
         {
@@ -17,14 +18,16 @@ namespace CE
             bool Initialize ( CEWindow * window );
             void Shutdown ();
 
-            // Getters
             VkInstance GetInstance () const { return m_Instance; }
             VkSurfaceKHR GetSurface () const { return m_Surface; }
             VulkanDevice * GetDevice () { return m_Device.get (); }
 
-            // Helper methods
             static bool CheckValidationLayerSupport ();
-            static CEArray<const char *> GetRequiredExtensions ();
+            static std::vector<const char *> GetRequiredExtensions ();
+            bool IsValid () const;
+
+            CEVulkanContext ( const CEVulkanContext & ) = delete;
+            CEVulkanContext & operator=( const CEVulkanContext & ) = delete;
 
         private:
             void CreateInstance ();
@@ -34,9 +37,8 @@ namespace CE
             VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
             std::unique_ptr<VulkanDevice> m_Device;
 
-            // Validation layers (debug only)
 #ifdef _DEBUG
-            const CEArray<const char *> m_ValidationLayers = { 
+            const std::vector<const char *> m_ValidationLayers = {
                 "VK_LAYER_KHRONOS_validation"
                 };
 #endif

@@ -1,3 +1,4 @@
+// Graphics/Vulkan/Pipelines/CEPostProcessPipeline.hpp
 #pragma once
 #include "Graphics/Vulkan/BaseClasses/CEVulkanBasePipeline.hpp"
 
@@ -7,11 +8,8 @@ namespace CE
         {
         public:
             CEPostProcessPipeline ( CEVulkanContext * context, CEVulkanShaderManager * shaderManager );
-            ~CEPostProcessPipeline () = default;
+            ~CEPostProcessPipeline () override = default;
 
-          
-
-            // Post-processing specific methods
             void SetInputTexture ( VkImageView textureView, VkSampler sampler );
             void UpdatePostProcessParams ( uint32_t currentImage, float time, const Math::Vector2 & screenSize );
 

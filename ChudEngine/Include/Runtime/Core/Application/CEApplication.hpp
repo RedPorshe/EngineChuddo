@@ -3,7 +3,7 @@
 #include "Platform/Window/CEWindow.hpp"
 #include "Core/CEObject/CEWorld.hpp"
 
-#include "Graphics/Vulkan/Core/CEVulkanRenderer.hpp"
+#include "Graphics/Vulkan/CEVulkanRenderer.hpp"
 
 namespace CE
     {
