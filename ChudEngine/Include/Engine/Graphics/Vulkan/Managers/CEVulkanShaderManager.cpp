@@ -129,7 +129,7 @@ namespace CE
         {
         if (shaderModule && shaderModule->module != VK_NULL_HANDLE)
             {
-            vkDestroyShaderModule ( m_Context->GetDevice (), shaderModule->module, nullptr );
+            vkDestroyShaderModule ( m_Context->GetDevice ()->GetDevice(), shaderModule->module, nullptr);
             shaderModule->module = VK_NULL_HANDLE;
             }
 

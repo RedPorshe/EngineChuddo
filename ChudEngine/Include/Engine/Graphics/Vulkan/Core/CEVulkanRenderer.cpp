@@ -166,7 +166,7 @@ namespace CE
         // Wait for device idle
         if (m_Context)
             {
-            vkDeviceWaitIdle ( m_Context->GetDevice () );
+            vkDeviceWaitIdle ( m_Context->GetDevice ()->GetDevice() );
             }
 
             // Cleanup in reverse order
@@ -339,7 +339,7 @@ namespace CE
 
     void CEVulkanRenderer::RecreateSwapchain ()
         {
-        vkDeviceWaitIdle ( m_Context->GetDevice () );
+        vkDeviceWaitIdle ( m_Context->GetDevice ()->GetDevice() );
 
         // Store old swapchain
         auto oldSwapchain = std::move ( m_Swapchain );
